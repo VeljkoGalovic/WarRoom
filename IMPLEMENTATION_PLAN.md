@@ -45,7 +45,7 @@
 ---
 
 ## Phase 4: Core Layout & Navigation
-- [ ] **4.1 App Dashboard Shell**
+- [x] **4.1 App Dashboard Shell**
   - Build responsive Dashboard layout featuring:
     - Collapsible Sidebar navigation with active route highlighting.
     - Top Navigation bar with Search bar, Notifications menu, and User Profile dropdown.
