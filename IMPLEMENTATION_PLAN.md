@@ -1,7 +1,7 @@
 # Autonomous App Implementation Plan
 
 ## Phase 1: Foundation & Core Setup
-- [ ] **1.1 Next.js & Tailwind Infrastructure**
+- [x] **1.1 Next.js & Tailwind Infrastructure**
   - Initialize Next.js 15 (App Router, TypeScript, ESLint, Tailwind CSS v4, `src/` directory).
   - Configure `@/` path aliases in `tsconfig.json`.
   - Set up standard layout wrappers with Tailwind global styles and CSS variables.
