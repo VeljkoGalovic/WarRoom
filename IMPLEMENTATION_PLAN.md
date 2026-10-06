@@ -6,7 +6,7 @@
   - Configure `@/` path aliases in `tsconfig.json`.
   - Set up standard layout wrappers with Tailwind global styles and CSS variables.
 
-- [ ] **1.2 UI Component Library & Theme System**
+- [x] **1.2 UI Component Library & Theme System**
   - Install `lucide-react`, `clsx`, and `tailwind-merge` utility helpers (`src/lib/utils.ts`).
   - Configure `next-themes` for Dark/Light mode support with zero layout shift.
   - Set up base UI components (Button, Input, Card, Modal/Dialog, Toast notifications, Skeleton loaders).
