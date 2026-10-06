@@ -11,7 +11,7 @@
   - Configure `next-themes` for Dark/Light mode support with zero layout shift.
   - Set up base UI components (Button, Input, Card, Modal/Dialog, Toast notifications, Skeleton loaders).
 
-- [ ] **1.3 Environment & Database Architecture**
+- [x] **1.3 Environment & Database Architecture**
   - Create `docker-compose.yml` for local PostgreSQL and Redis containers.
   - Install and initialize Prisma ORM (`prisma/schema.prisma`).
   - Configure environment validation in `src/env.mjs` using `zod` for `DATABASE_URL`, `NEXTAUTH_SECRET`, and API keys.
