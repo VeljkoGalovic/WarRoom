@@ -24,10 +24,13 @@ Avatar.displayName = "Avatar";
 interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {}
 
 const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, src, ...props }, ref) => {
+    if (!src) return null;
+
     return (
       <img
         ref={ref}
+        src={src}
         className={cn("aspect-square h-full w-full", className)}
         {...props}
       />
