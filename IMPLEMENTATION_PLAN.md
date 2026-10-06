@@ -19,12 +19,12 @@
 ---
 
 ## Phase 2: Database Schema & Seeding
-- [ ] **2.1 Data Models Definition**
+- [x] **2.1 Data Models Definition**
   - Define `User`, `Account`, `Session`, and `VerificationToken` models (Auth compatibility).
   - Define Core Domain Models (`Workspace`/`Tenant`, `Resource`, `ActivityLog`, `Settings`).
   - Establish proper indexes, foreign key cascading rules, and `@updatedAt` timestamps.
 
-- [ ] **2.2 Migrations & Seed Engine**
+- [x] **2.2 Migrations & Seed Engine**
   - Generate initial Prisma migration (`npx prisma migrate dev --name init`).
   - Create a realistic database seed script in `prisma/seed.ts` with mock users, workspaces, and items.
   - Add `npm run db:seed` script to `package.json`.
@@ -32,12 +32,12 @@
 ---
 
 ## Phase 3: Authentication & Security Guardrails
-- [ ] **3.1 Auth Infrastructure**
+- [x] **3.1 Auth Infrastructure**
   - Configure Auth.js / NextAuth v5 with Credentials and OAuth providers (GitHub/Google).
   - Implement JWT session strategy with custom callbacks to inject `user.id` and `role` into session objects.
   - Set up protected routes via Next.js Middleware (`src/middleware.ts`).
 
-- [ ] **3.2 Auth UI & Flows**
+- [x] **3.2 Auth UI & Flows**
   - Build responsive Login, Registration, Password Reset, and Verification pages.
   - Implement client-side form validation using `react-hook-form` and `zod`.
   - Add OAuth quick-login buttons and feedback toasts on authentication errors.
