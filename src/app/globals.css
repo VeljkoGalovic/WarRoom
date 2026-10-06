@@ -1,76 +1,144 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
-  --card: #ffffff;
-  --card-foreground: #0a0a0a;
-  --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #0a0a0a;
-  --primary-foreground: #fafafa;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #0a0a0a;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --accent: #f5f5f5;
-  --accent-foreground: #0a0a0a;
-  --destructive: #ef4444;
+  /* Tactical HUD - Military Sci-Fi Color Palette */
+  --background: #030712;        /* Obsidian slate - deepest dark */
+  --background-elevated: #090d16; /* Slightly elevated panels */
+  --background-hover: #0f172a;   /* Hover state */
+
+  --foreground: #e2e8f0;        /* Primary text - slate-200 */
+  --foreground-muted: #64748b;  /* Muted text - slate-500 */
+
+  --card: #090d16;              /* Card backgrounds */
+  --card-foreground: #e2e8f0;
+  --card-border: #1e293b;       /* Card borders - slate-800 */
+
+  --popover: #090d16;
+  --popover-foreground: #e2e8f0;
+
+  --primary: #f59e0b;           /* Amber - primary accent */
+  --primary-foreground: #030712;
+  --primary-glow: #fbbf24;      /* Amber glow */
+  --primary-dim: #b45309;       /* Dimmed amber */
+
+  --secondary: #10b981;         /* Phosphor green - secondary accent */
+  --secondary-foreground: #030712;
+  --secondary-glow: #34d399;    /* Green glow */
+  --secondary-dim: #059669;     /* Dimmed green */
+
+  --muted: #1e293b;             /* Muted backgrounds */
+  --muted-foreground: #64748b;
+
+  --accent: #1e293b;
+  --accent-foreground: #e2e8f0;
+
+  --destructive: #ef4444;       /* Red for critical alerts */
   --destructive-foreground: #fafafa;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #0a0a0a;
+  --destructive-glow: #f87171;
+
+  --border: #1e293b;            /* Default borders */
+  --input: #1e293b;
+  --ring: #f59e0b;              /* Focus ring - amber */
+
   --radius: 0.5rem;
+
+  /* Tactical HUD specific */
+  --hud-border: #1e293b;
+  --hud-border-active: #f59e0b;
+  --hud-reticle: #f59e0b;
+  --hud-scanline: rgba(16, 185, 129, 0.03);
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --card: #0a0a0a;
-  --card-foreground: #fafafa;
-  --popover: #0a0a0a;
-  --popover-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #0a0a0a;
-  --secondary: #262626;
-  --secondary-foreground: #fafafa;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #262626;
-  --accent-foreground: #fafafa;
-  --destructive: #7f1d1d;
+  /* Already dark-first, these are for completeness */
+  --background: #030712;
+  --background-elevated: #090d16;
+  --background-hover: #0f172a;
+  --foreground: #e2e8f0;
+  --foreground-muted: #64748b;
+  --card: #090d16;
+  --card-foreground: #e2e8f0;
+  --card-border: #1e293b;
+  --popover: #090d16;
+  --popover-foreground: #e2e8f0;
+  --primary: #f59e0b;
+  --primary-foreground: #030712;
+  --primary-glow: #fbbf24;
+  --primary-dim: #b45309;
+  --secondary: #10b981;
+  --secondary-foreground: #030712;
+  --secondary-glow: #34d399;
+  --secondary-dim: #059669;
+  --muted: #1e293b;
+  --muted-foreground: #64748b;
+  --accent: #1e293b;
+  --accent-foreground: #e2e8f0;
+  --destructive: #ef4444;
   --destructive-foreground: #fafafa;
-  --border: #262626;
-  --input: #262626;
-  --ring: #d4d4d4;
+  --destructive-glow: #f87171;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #f59e0b;
+  --hud-border: #1e293b;
+  --hud-border-active: #f59e0b;
+  --hud-reticle: #f59e0b;
+  --hud-scanline: rgba(16, 185, 129, 0.03);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-elevated: var(--background-elevated);
+  --color-background-hover: var(--background-hover);
   --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-card-border: var(--card-border);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-glow: var(--primary-glow);
+  --color-primary-dim: var(--primary-dim);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-glow: var(--secondary-glow);
+  --color-secondary-dim: var(--secondary-dim);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-glow: var(--destructive-glow);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-hud-border: var(--hud-border);
+  --color-hud-border-active: var(--hud-border-active);
+  --color-hud-reticle: var(--hud-reticle);
+  --color-hud-scanline: var(--hud-scanline);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Tactical HUD animations */
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-scanline: scanline 8s linear infinite;
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 5px var(--primary), 0 0 10px var(--primary), 0 0 15px var(--primary); }
+  100% { box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary), 0 0 30px var(--primary); }
 }
 
 * {
@@ -80,5 +148,288 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  /* Subtle scanline effect */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--hud-scanline) 2px,
+      var(--hud-scanline) 4px
+    );
+}
+
+/* Tactical typography utilities */
+.text-tactical {
+  font-family: var(--font-mono), monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.text-tactical-lg {
+  font-family: var(--font-mono), monospace;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.text-tactical-xl {
+  font-family: var(--font-mono), monospace;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Monospace timestamp utility */
+.text-timestamp {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--foreground-muted);
+}
+
+/* HUD Panel base styles */
+.hud-panel {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  position: relative;
+  backdrop-filter: blur(8px);
+}
+
+.hud-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--hud-border-active), transparent);
+  opacity: 0.5;
+}
+
+.hud-panel-active {
+  border-color: var(--hud-border-active);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+}
+
+.hud-panel-active::before {
+  opacity: 1;
+}
+
+/* Reticle corners */
+.hud-reticle {
+  position: relative;
+}
+
+.hud-reticle::before,
+.hud-reticle::after,
+.hud-reticle > *::before,
+.hud-reticle > *::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--hud-reticle);
+  opacity: 0.6;
+}
+
+.hud-reticle::before {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.hud-reticle::after {
+  top: -1px;
+  right: -1px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.hud-reticle > *::before {
+  bottom: -1px;
+  left: -1px;
+  border-right: none;
+  border-top: none;
+}
+
+.hud-reticle > *::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+/* Status badge variants */
+.badge-tactical {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  border: 1px solid;
+}
+
+.badge-tactical-active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--secondary);
+  color: var(--secondary-glow);
+}
+
+.badge-tactical-contested {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--primary);
+  color: var(--primary-glow);
+}
+
+.badge-tactical-blocked {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--destructive);
+  color: var(--destructive-glow);
+}
+
+.badge-tactical-complete {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: var(--secondary);
+  color: var(--secondary-glow);
+}
+
+.badge-tactical-archived {
+  background: rgba(100, 116, 139, 0.15);
+  border-color: var(--foreground-muted);
+  color: var(--foreground-muted);
+}
+
+/* Tactical button styles */
+.btn-tactical {
+  position: relative;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid;
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+  background: transparent;
+}
+
+.btn-tactical-primary {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-tactical-primary:hover {
+  background: rgba(245, 158, 11, 0.1);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+.btn-tactical-primary:active {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.btn-tactical-secondary {
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+
+.btn-tactical-secondary:hover {
+  background: rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-tactical-danger {
+  border-color: var(--destructive);
+  color: var(--destructive);
+}
+
+.btn-tactical-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-tactical-ghost {
+  border-color: transparent;
+  color: var(--foreground-muted);
+}
+
+.btn-tactical-ghost:hover {
+  background: var(--muted);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+/* Input styles */
+.input-tactical {
+  background: var(--background);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875rem;
+  width: 100%;
+  transition: all 0.15s ease;
+}
+
+.input-tactical:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+.input-tactical::placeholder {
+  color: var(--foreground-muted);
+}
+
+/* Progress bar */
+.progress-tactical {
+  height: 4px;
+  background: var(--muted);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-tactical-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground-muted);
+}
+
+/* Selection */
+::selection {
+  background: rgba(245, 158, 11, 0.3);
+  color: var(--foreground);
 }
