@@ -26,14 +26,32 @@ import {
   Database,
   Users,
   FileText,
+  Command,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { CommandPalette } from "@/components/ui/command-palette";
 
 export function TopNav() {
   const { data: session } = useSession() || { data: null };
   const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
+
+  const handleKeyDown = React.useCallback(
+    (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen(true);
+      }
+    },
+    []
+  );
+
+  React.useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
@@ -155,6 +173,9 @@ export function TopNav() {
           </aside>
         </div>
       )}
+
+      {/* Command Palette */}
+      <CommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
     </header>
   );
 }

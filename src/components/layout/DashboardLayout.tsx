@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { cn } from "@/lib/utils";
 
 interface DashboardLayoutProps {
@@ -22,7 +23,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       >
         <TopNav />
-        <main className="p-4 lg:p-8 pt-20">{children}</main>
+        <div className="px-4 lg:px-8 py-4 border-b">
+          <Breadcrumbs />
+        </div>
+        <main className="p-4 lg:p-8 pt-4">{children}</main>
       </div>
     </div>
   );
