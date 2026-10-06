@@ -24,8 +24,11 @@ export function Breadcrumbs() {
       { label: "Home", href: "/dashboard" },
     ];
 
-    let currentPath = "";
+    let currentPath = "/dashboard";
     segments.forEach((segment) => {
+      // Skip "dashboard" segment since it's the base path for Home
+      if (segment === "dashboard") return;
+
       currentPath += `/${segment}`;
       const label = segment
         .replace(/-/g, " ")

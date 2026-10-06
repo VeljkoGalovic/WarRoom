@@ -35,9 +35,6 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         e.preventDefault();
         onClose();
       }
-      if (e.key === "Escape") {
-        onClose();
-      }
     };
 
     if (isOpen) {
@@ -54,6 +51,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         className="fixed inset-0 bg-black/50"
         onClick={onClose}
         aria-hidden="true"
+        data-testid="backdrop"
       />
       <Command className="w-full max-w-md">
         <CommandInput
