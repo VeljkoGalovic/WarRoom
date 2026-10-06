@@ -51,7 +51,7 @@
     - Top Navigation bar with Search bar, Notifications menu, and User Profile dropdown.
     - Mobile-friendly drawer navigation.
 
-- [ ] **4.2 Global State & Feedback UI**
+- [x] **4.2 Global State & Feedback UI**
   - Set up global Toast Provider (`sonner` or custom) and Error Boundary wrappers.
   - Implement global search command palette (`cmd+k` modal).
   - Add visual breadcrumbs component for deeply nested routes.
