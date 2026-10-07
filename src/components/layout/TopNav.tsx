@@ -35,7 +35,7 @@ export function TopNav() {
   const { data: session } = useSession() || { data: null };
   const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [searchOpen, setSearchOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
 
   const handleKeyDown = React.useCallback(
@@ -49,9 +49,8 @@ export function TopNav() {
   );
 
   React.useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+    setMounted(true);
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
@@ -72,8 +71,12 @@ export function TopNav() {
             <input
               type="search"
               placeholder="Search..."
-              className="h-9 w-64 rounded-md border bg-background pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-ring"
-              onFocus={() => setSearchOpen(true)}
+              className="..."
+              onFocus={(e) => {
+                e.target.blur(); // prevent the native focus ring fighting the palette
+                setCommandPaletteOpen(true);
+              }}
+              readOnly // so mobile keyboards don't pop up behind the palette
             />
           </div>
         </div>
@@ -85,7 +88,13 @@ export function TopNav() {
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
           >
-            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            {!mounted ? (
+              <div className="h-5 w-5" aria-hidden="true" />
+            ) : theme === "dark" ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
           </Button>
 
           <Button variant="ghost" size="icon" aria-label="Notifications">
