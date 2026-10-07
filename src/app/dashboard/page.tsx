@@ -1,131 +1,173 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TacticalCard, TacticalCardHeader, TacticalCardTitle, TacticalCardContent } from "@/components/hud/TacticalCard";
+import { StatusBadge } from "@/components/hud/StatusBadge";
+import { Target, Users, Map, Zap, Shield, Cpu, Radio, Sparkles, Brain, Trophy, Clock, TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
+  const stats = [
+    { label: "ACTIVE FRONTS", value: "3", icon: Target, color: "text-primary", trend: "+1 THIS WEEK" },
+    { label: "TOTAL CAMPAIGNS", value: "5", icon: Map, color: "text-secondary", trend: "STABLE" },
+    { label: "AI COMMAND STAFF", value: "5", icon: Users, color: "text-destructive", trend: "FULLY OPERATIONAL" },
+    { label: "DAILY MOMENTUM", value: "78%", icon: TrendingUp, color: "text-primary-glow", trend: "NOMINAL" },
+  ];
+
+  const recentActivity = [
+    { category: "CAMPAIGN", message: "MATH OLYMPIAD: Completed mock session #3", time: "02:14", metadata: { threatLevel: "CRITICAL" } },
+    { category: "INTEL", message: "SPECIALIST NOVA: Debug complete - Prisma adapter fixed", time: "01:52", metadata: { agent: "SPECIALIST NOVA" } },
+    { category: "LOGISTICS", message: "CAPTAIN KELSO: Dependency breach on segment tree implementation", time: "00:47", metadata: { agent: "CAPTAIN KELSO" } },
+    { category: "SYSTEM", message: "War Map visualizer deployed to /dashboard/warmap", time: "23:11", metadata: { version: "1.0.0" } },
+  ];
+
+  const quickActions = [
+    { label: "DISPATCH TO GENERAL VANCE", description: "Request strategic assessment on campaign priorities", icon: Zap, agent: "GENERAL" },
+    { label: "TASK SPECIALIST NOVA", description: "Deploy coding operation for segment tree beats", icon: Cpu, agent: "SPECIALIST" },
+    { label: "QUERY LIEUTENANT MERCURY", description: "Request intelligence on IMO 2026 geometry trends", icon: Radio, agent: "LIEUTENANT" },
+    { label: "REPORT TO SERGEANT HAMMER", description: "Daily accountability check-in and streak review", icon: Shield, agent: "SERGEANT" },
+  ];
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
+        {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Welcome to WarRoom. Here's an overview of your workspace.
-          </p>
+          <h1 className="text-tactical-xl text-primary">COMMAND OVERVIEW</h1>
+          <p className="text-timestamp text-foreground-muted mt-1">TACTICAL INTELLIGENCE BRIEFING • {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border bg-card p-6">
-            <div className="text-sm font-medium text-muted-foreground">Total Users</div>
-            <div className="text-3xl font-bold mt-2">1,234</div>
-            <div className="text-sm text-green-600 mt-1">+12% from last month</div>
-          </div>
-          <div className="rounded-lg border bg-card p-6">
-            <div className="text-sm font-medium text-muted-foreground">Active Tasks</div>
-            <div className="text-3xl font-bold mt-2">56</div>
-            <div className="text-sm text-green-600 mt-1">+8% from last week</div>
-          </div>
-          <div className="rounded-lg border bg-card p-6">
-            <div className="text-sm font-medium text-muted-foreground">Revenue</div>
-            <div className="text-3xl font-bold mt-2">$45,678</div>
-            <div className="text-sm text-green-600 mt-1">+23% from last month</div>
-          </div>
-          <div className="rounded-lg border bg-card p-6">
-            <div className="text-sm font-medium text-muted-foreground">Conversion Rate</div>
-            <div className="text-3xl font-bold mt-2">3.24%</div>
-            <div className="text-sm text-red-600 mt-1">-2% from last week</div>
-          </div>
+        {/* Stats Grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat, index) => (
+            <TacticalCard key={index} variant="default" withReticle className="relative overflow-hidden">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={cn("h-12 w-12 rounded-lg flex items-center justify-center", `bg-${stat.color.replace("text-", "")}/10`)}>
+                    <stat.icon className={cn("h-6 w-6", stat.color)} />
+                  </div>
+                  <div>
+                    <p className="text-timestamp text-foreground-muted">{stat.label}</p>
+                    <p className="text-tactical-2xl font-mono {stat.color}">{stat.value}</p>
+                  </div>
+                </div>
+                <StatusBadge variant={stat.trend.includes("+") ? "active" : stat.trend === "STABLE" ? "standby" : "mission-complete"} className="text-[0.55rem]">
+                  {stat.trend}
+                </StatusBadge>
+              </div>
+            </TacticalCard>
+          ))}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border bg-card p-6">
-            <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <svg className="h-5 w-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium">New user registered</p>
-                  <p className="text-sm text-muted-foreground">John Doe joined the team</p>
-                </div>
-                <span className="text-xs text-muted-foreground ml-auto">2 min ago</span>
+        {/* Main Content Grid */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Recent Activity */}
+          <TacticalCard variant="default" withReticle className="lg:col-span-2">
+            <TacticalCardHeader>
+              <div className="flex items-center justify-between">
+                <TacticalCardTitle>RECENT ACTIVITY LOG</TacticalCardTitle>
+                <StatusBadge variant="active" className="text-[0.55rem]">LIVE</StatusBadge>
               </div>
-              <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
-                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium">Task completed</p>
-                  <p className="text-sm text-muted-foreground">Design review finished</p>
-                </div>
-                <span className="text-xs text-muted-foreground ml-auto">1 hour ago</span>
+            </TacticalCardHeader>
+            <TacticalCardContent>
+              <div className="space-y-3">
+                {recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-accent/30 border border-hud-border/50 hover:border-primary/30 transition-colors">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <span className="text-tactical text-xs text-primary font-mono">{activity.category.slice(0, 3)}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-foreground text-sm">{activity.message}</p>
+                      <div className="flex items-center gap-2 mt-1 text-timestamp text-foreground-muted">
+                        <Clock className="h-3 w-3" />
+                        <span>{activity.time}</span>
+                        {activity.metadata.threatLevel && (
+                          <span className="px-1.5 py-0.5 bg-destructive/10 rounded text-destructive-glow text-[0.5rem]">{activity.metadata.threatLevel}</span>
+                        )}
+                        {activity.metadata.agent && (
+                          <span className="px-1.5 py-0.5 bg-primary/10 rounded text-primary text-[0.5rem]">{activity.metadata.agent}</span>
+                        )}
+                        {activity.metadata.version && (
+                          <span className="px-1.5 py-0.5 bg-secondary/10 rounded text-secondary text-[0.5rem]">v{activity.metadata.version}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
-                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium">New comment</p>
-                  <p className="text-sm text-muted-foreground">Sarah commented on Project Alpha</p>
-                </div>
-                <span className="text-xs text-muted-foreground ml-auto">3 hours ago</span>
-              </div>
-            </div>
-          </div>
+            </TacticalCardContent>
+          </TacticalCard>
 
-          <div className="rounded-lg border bg-card p-6">
-            <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-            <div className="space-y-3">
-              <button className="w-full text-left p-3 rounded-lg border hover:bg-accent transition-colors flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <svg className="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
+          {/* Quick Actions */}
+          <TacticalCard variant="default" withReticle>
+            <TacticalCardHeader>
+              <TacticalCardTitle>TACTICAL DISPATCH</TacticalCardTitle>
+            </TacticalCardHeader>
+            <TacticalCardContent>
+              <div className="space-y-3">
+                {quickActions.map((action, index) => (
+                  <div
+                    key={index}
+                    className="group flex items-center gap-3 p-3 rounded-lg bg-accent/30 border border-hud-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer"
+                  >
+                    <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform", `bg-${action.icon === Zap ? "destructive" : action.icon === Cpu ? "primary" : action.icon === Radio ? "secondary" : "destructive"}/10`)}>
+                      <action.icon className={cn("h-5 w-5", action.icon === Zap ? "text-destructive" : action.icon === Cpu ? "text-primary" : action.icon === Radio ? "text-secondary" : "text-destructive")} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-tactical text-sm font-mono text-primary">{action.label}</p>
+                      <p className="text-timestamp text-foreground-muted text-xs">{action.description}</p>
+                    </div>
+                    <span className="text-tactical text-xs text-primary/50 opacity-0 group-hover:opacity-100 transition-opacity">►</span>
+                  </div>
+                ))}
+              </div>
+            </TacticalCardContent>
+          </TacticalCard>
+
+          {/* System Status */}
+          <TacticalCard variant="default" withReticle className="lg:col-span-1">
+            <TacticalCardHeader>
+              <TacticalCardTitle>SYSTEM STATUS</TacticalCardTitle>
+            </TacticalCardHeader>
+            <TacticalCardContent>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-timestamp mb-1">
+                    <span className="text-foreground-muted">OMNIROUTE ENDPOINT</span>
+                    <StatusBadge variant="active">ONLINE</StatusBadge>
+                  </div>
+                  <div className="progress-tactical h-1.5">
+                    <div className="progress-tactical-bar" style={{ width: "100%" }} />
+                  </div>
                 </div>
                 <div>
-                  <p className="font-medium">Create New Task</p>
-                  <p className="text-sm text-muted-foreground">Add a new task to your workspace</p>
-                </div>
-              </button>
-              <button className="w-full text-left p-3 rounded-lg border hover:bg-accent transition-colors flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                  <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
+                  <div className="flex justify-between text-timestamp mb-1">
+                    <span className="text-foreground-muted">DATABASE CONNECTION</span>
+                    <StatusBadge variant="active">CONNECTED</StatusBadge>
+                  </div>
+                  <div className="progress-tactical h-1.5">
+                    <div className="progress-tactical-bar" style={{ width: "100%" }} />
+                  </div>
                 </div>
                 <div>
-                  <p className="font-medium">Invite Team Member</p>
-                  <p className="text-sm text-muted-foreground">Add a new member to your team</p>
-                </div>
-              </button>
-              <button className="w-full text-left p-3 rounded-lg border hover:bg-accent transition-colors flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+                  <div className="flex justify-between text-timestamp mb-1">
+                    <span className="text-foreground-muted">AI STAFF READINESS</span>
+                    <StatusBadge variant="mission-complete">5/5 OPERATIONAL</StatusBadge>
+                  </div>
+                  <div className="progress-tactical h-1.5">
+                    <div className="progress-tactical-bar" style={{ width: "100%" }} />
+                  </div>
                 </div>
                 <div>
-                  <p className="font-medium">Create Report</p>
-                  <p className="text-sm text-muted-foreground">Generate a new analytics report</p>
+                  <div className="flex justify-between text-timestamp mb-1">
+                    <span className="text-foreground-muted">WAR MAP RENDER ENGINE</span>
+                    <StatusBadge variant="standby">STANDBY</StatusBadge>
+                  </div>
+                  <div className="progress-tactical h-1.5">
+                    <div className="progress-tactical-bar" style={{ width: "90%" }} />
+                  </div>
                 </div>
-              </button>
-              <button className="w-full text-left p-3 rounded-lg border hover:bg-accent transition-colors flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium">Export Data</p>
-                  <p className="text-sm text-muted-foreground">Download your workspace data</p>
-                </div>
-              </button>
-            </div>
-          </div>
+              </div>
+            </TacticalCardContent>
+          </TacticalCard>
         </div>
       </div>
     </DashboardLayout>

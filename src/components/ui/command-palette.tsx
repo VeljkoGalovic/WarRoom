@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
-import { Search, LayoutDashboard, Database, Users, FileText, Settings, Key, Bell } from "lucide-react";
+import { Search, Target, Users, Map, Zap, Shield, Cpu, Radio, Sparkles, Plus, MessageSquare, CheckCircle, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
 interface CommandPaletteProps {
@@ -11,19 +11,21 @@ interface CommandPaletteProps {
 }
 
 const navigationItems = [
-  { name: "Overview", href: "/dashboard", icon: LayoutDashboard, shortcut: "⌘1" },
-  { name: "Resources", href: "/dashboard/resources", icon: Database, shortcut: "⌘2" },
-  { name: "Team", href: "/dashboard/team", icon: Users, shortcut: "⌘3" },
-  { name: "Reports", href: "/dashboard/reports", icon: FileText, shortcut: "⌘4" },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings, shortcut: "⌘5" },
+  { name: "COMMAND OVERVIEW", href: "/dashboard", icon: TrendingUp, shortcut: "⌘1" },
+  { name: "TACTICAL GOALS", href: "/dashboard/goals", icon: Target, shortcut: "⌘2" },
+  { name: "AI COMMAND STAFF", href: "/dashboard/team", icon: Users, shortcut: "⌘3" },
+  { name: "WAR MAP", href: "/dashboard/warmap", icon: Map, shortcut: "⌘4" },
 ];
 
 const actionItems = [
-  { name: "New Task", href: "/dashboard/tasks/new", icon: Key, shortcut: "⌘N" },
-  { name: "Invite Member", href: "/dashboard/team/invite", icon: Users, shortcut: "⌘I" },
-  { name: "Create Report", href: "/dashboard/reports/new", icon: FileText, shortcut: "⌘R" },
-  { name: "API Keys", href: "/dashboard/settings/api-keys", icon: Key, shortcut: "⌘K" },
-  { name: "Notifications", href: "/dashboard/notifications", icon: Bell, shortcut: "⌘B" },
+  { name: "NEW MILESTONE", description: "Add a daily micro-task to active campaign", icon: Plus, shortcut: "⌘M", href: "/dashboard/goals" },
+  { name: "DISPATCH TO GENERAL VANCE", description: "Request strategic assessment", icon: Zap, shortcut: "⌘G", href: "/dashboard/team" },
+  { name: "TASK SPECIALIST NOVA", description: "Deploy coding operation", icon: Cpu, shortcut: "⌘N", href: "/dashboard/team" },
+  { name: "QUERY LIEUTENANT MERCURY", description: "Request intelligence briefing", icon: Radio, shortcut: "⌘I", href: "/dashboard/team" },
+  { name: "REPORT TO SERGEANT HAMMER", description: "Daily accountability check-in", icon: Shield, shortcut: "⌘H", href: "/dashboard/team" },
+  { name: "MESSAGE CAPTAIN KELSO", description: "Logistics & operations query", icon: MessageSquare, shortcut: "⌘L", href: "/dashboard/team" },
+  { name: "TOGGLE MILESTONE", description: "Quick complete/uncomplete active task", icon: CheckCircle, shortcut: "⌘T", href: "/dashboard/goals" },
+  { name: "NEW CAMPAIGN", description: "Create new strategic objective", icon: Target, shortcut: "⌘C", href: "/dashboard/goals" },
 ];
 
 export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
@@ -67,7 +69,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         </CommandInput>
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Navigation">
+          <CommandGroup heading="NAVIGATION">
             {navigationItems
               .filter((item) =>
                 item.name.toLowerCase().includes(search.toLowerCase())
@@ -85,17 +87,18 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                     className="flex items-center gap-2 w-full"
                   >
                     <item.icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{item.shortcut}</span>
+                    <span className="text-tactical text-xs font-mono">{item.name}</span>
+                    <span className="ml-auto text-xs text-foreground-muted">{item.shortcut}</span>
                   </Link>
                 </CommandItem>
               ))}
           </CommandGroup>
           <CommandSeparator />
-          <CommandGroup heading="Actions">
+          <CommandGroup heading="TACTICAL ACTIONS">
             {actionItems
               .filter((item) =>
-                item.name.toLowerCase().includes(search.toLowerCase())
+                item.name.toLowerCase().includes(search.toLowerCase()) ||
+                item.description.toLowerCase().includes(search.toLowerCase())
               )
               .map((item) => (
                 <CommandItem
@@ -105,13 +108,16 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                   }}
                 >
                   <Link
-                    href={item.href}
+                    href={item.href || "#"}
                     onClick={onClose}
                     className="flex items-center gap-2 w-full"
                   >
                     <item.icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{item.shortcut}</span>
+                    <div className="flex-1 text-left">
+                      <p className="text-tactical text-xs font-mono text-primary">{item.name}</p>
+                      <p className="text-timestamp text-foreground-muted text-[0.6rem]">{item.description}</p>
+                    </div>
+                    <span className="ml-auto text-xs text-foreground-muted">{item.shortcut}</span>
                   </Link>
                 </CommandItem>
               ))}
