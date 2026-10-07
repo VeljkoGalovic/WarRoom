@@ -2,8 +2,14 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { colors, sizing, typography, motion, effects } from "@/styles/hud-theme";
 
-interface TerminalInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "prefix" | "suffix"> {
+/**
+ * TerminalInput - Tactical form input component
+ * All styling driven by centralized theme configuration
+ */
+
+export interface TerminalInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "prefix" | "suffix"> {
   label?: string;
   prefix?: React.ReactNode;
   suffix?: React.ReactNode;
@@ -17,47 +23,136 @@ export const TerminalInput = React.forwardRef<HTMLInputElement, TerminalInputPro
     const inputId = id || `terminal-input-${React.useId()}`;
     const errorId = `${inputId}-error`;
     const hintId = `${inputId}-hint`;
+    const hasError = !!error;
+    const hasHint = !!hint;
+
+    // Build inline styles from theme
+    const inputStyles: React.CSSProperties = {
+      backgroundColor: colors.background.base,
+      border: `1px solid ${hasError ? colors.destructive.base : colors.border.input}`,
+      color: colors.foreground.primary,
+      padding: `${sizing.input.paddingX} ${sizing.input.paddingX}`,
+      borderRadius: sizing.radius.lg,
+      fontFamily: typography.fontFamily.mono,
+      fontSize: sizing.input.fontSize,
+      height: sizing.input.height,
+      width: "100%",
+      transition: `all ${motion.duration.fast} ${motion.easing.default}`,
+      boxSizing: "border-box",
+    };
+
+    const focusStyles: React.CSSProperties = {
+      outline: "none",
+      borderColor: hasError ? colors.destructive.base : colors.border.ring,
+      boxShadow: `0 0 0 2px ${
+        hasError ? colors.destructive.glow + "33" : colors.primary.glow + "33"
+      }`,
+    };
+
+    const wrapperStyles: React.CSSProperties = {
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.5rem",
+      width: "100%",
+    };
+
+    const labelStyles: React.CSSProperties = {
+      fontFamily: typography.fontFamily.mono,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+      letterSpacing: "0.1em",
+      textTransform: "uppercase",
+      color: hasError ? colors.destructive.base : colors.foreground.primary,
+      marginBottom: "0.375rem",
+    };
+
+    const prefixStyles: React.CSSProperties = {
+      position: "absolute",
+      left: sizing.input.paddingX,
+      top: "50%",
+      transform: "translateY(-50%)",
+      color: colors.foreground.muted,
+      fontFamily: typography.fontFamily.mono,
+      fontSize: sizing.input.fontSize,
+      pointerEvents: "none",
+      zIndex: 1,
+    };
+
+    const suffixStyles: React.CSSProperties = {
+      position: "absolute",
+      right: sizing.input.paddingX,
+      top: "50%",
+      transform: "translateY(-50%)",
+      color: colors.foreground.muted,
+      fontFamily: typography.fontFamily.mono,
+      fontSize: sizing.input.fontSize,
+      pointerEvents: "none",
+      zIndex: 1,
+    };
+
+    const inputWrapperStyles: React.CSSProperties = {
+      position: "relative",
+      display: "flex",
+      alignItems: "center",
+    };
+
+    const errorHintStyles: React.CSSProperties = {
+      marginTop: "0.375rem",
+      fontFamily: typography.fontFamily.mono,
+      fontSize: "0.625rem",
+      letterSpacing: "0.05em",
+      color: hasError ? colors.destructive.glow : colors.foreground.muted,
+    };
 
     return (
-      <div className={cn("w-full", className)}>
+      <div className={cn("w-full", className)} style={wrapperStyles}>
         {label && (
-          <label htmlFor={inputId} className="block text-tactical text-primary mb-1.5">
+          <label htmlFor={inputId} style={labelStyles}>
             {label}
           </label>
         )}
-        <div className="relative flex items-center">
-          {prefix && (
-            <span className="absolute left-3 text-foreground-muted pointer-events-none font-mono text-sm">
-              {prefix}
-            </span>
-          )}
+        <div style={inputWrapperStyles}>
+          {prefix && <span style={prefixStyles}>{prefix}</span>}
           <input
             ref={ref}
             id={inputId}
             className={cn(
-              "input-tactical w-full",
+              "input-tactical",
               prefix && "pl-10",
-              suffix && "pr-10",
-              error && "border-destructive focus:border-destructive focus:ring-destructive/20"
+              suffix && "pr-10"
             )}
-            aria-invalid={error ? "true" : "false"}
-            aria-describedby={error ? errorId : hint ? hintId : undefined}
+            style={{
+              ...inputStyles,
+              paddingLeft: prefix ? "2.5rem" : sizing.input.paddingX,
+              paddingRight: suffix ? "2.5rem" : sizing.input.paddingX,
+            }}
+            aria-invalid={hasError ? "true" : "false"}
+            aria-describedby={
+              hasError ? errorId : hasHint ? hintId : undefined
+            }
+            onFocus={(e) => {
+              Object.assign(e.currentTarget.style, focusStyles);
+              props.onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              // Reset focus styles
+              e.currentTarget.style.borderColor = hasError
+                ? colors.destructive.base
+                : colors.border.input;
+              e.currentTarget.style.boxShadow = "none";
+              props.onBlur?.(e);
+            }}
             {...props}
           />
-          {suffix && (
-            <span className="absolute right-3 text-foreground-muted pointer-events-none font-mono text-sm">
-              {suffix}
-            </span>
-          )}
+          {suffix && <span style={suffixStyles}>{suffix}</span>}
         </div>
-        {error && (
-          <p id={errorId} className="mt-1.5 text-timestamp text-destructive-glow flex items-center gap-1.5">
-            <span className="text-destructive">[ERROR]</span>
+        {hasError && (
+          <p id={errorId} style={errorHintStyles} role="alert">
             {error}
           </p>
         )}
-        {hint && !error && (
-          <p id={hintId} className="mt-1.5 text-timestamp text-foreground-muted">
+        {hasHint && !hasError && (
+          <p id={hintId} style={errorHintStyles}>
             {hint}
           </p>
         )}
@@ -68,46 +163,112 @@ export const TerminalInput = React.forwardRef<HTMLInputElement, TerminalInputPro
 
 TerminalInput.displayName = "TerminalInput";
 
-// Textarea variant
-interface TerminalTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+/**
+ * TerminalTextarea - Tactical textarea component
+ */
+export interface TerminalTextareaProps
+  extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "prefix" | "suffix"> {
   label?: string;
   error?: string;
   hint?: string;
   className?: string;
+  rows?: number;
 }
 
 export const TerminalTextarea = React.forwardRef<HTMLTextAreaElement, TerminalTextareaProps>(
-  ({ className, label, error, hint, id, ...props }, ref) => {
+  ({ className, label, error, hint, id, rows = 4, ...props }, ref) => {
     const textareaId = id || `terminal-textarea-${React.useId()}`;
     const errorId = `${textareaId}-error`;
     const hintId = `${textareaId}-hint`;
+    const hasError = !!error;
+    const hasHint = !!hint;
+
+    const textareaStyles: React.CSSProperties = {
+      backgroundColor: colors.background.base,
+      border: `1px solid ${hasError ? colors.destructive.base : colors.border.input}`,
+      color: colors.foreground.primary,
+      padding: `${sizing.input.paddingX} ${sizing.input.paddingX}`,
+      borderRadius: sizing.radius.lg,
+      fontFamily: typography.fontFamily.mono,
+      fontSize: sizing.input.fontSize,
+      minHeight: `${parseFloat(sizing.input.height) * rows}px`,
+      width: "100%",
+      transition: `all ${motion.duration.fast} ${motion.easing.default}`,
+      boxSizing: "border-box",
+      resize: "vertical",
+      lineHeight: 1.5,
+    };
+
+    const focusStyles: React.CSSProperties = {
+      outline: "none",
+      borderColor: hasError ? colors.destructive.base : colors.border.ring,
+      boxShadow: `0 0 0 2px ${
+        hasError ? colors.destructive.glow + "33" : colors.primary.glow + "33"
+      }`,
+    };
+
+    const wrapperStyles: React.CSSProperties = {
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.5rem",
+      width: "100%",
+    };
+
+    const labelStyles: React.CSSProperties = {
+      fontFamily: typography.fontFamily.mono,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+      letterSpacing: "0.1em",
+      textTransform: "uppercase",
+      color: hasError ? colors.destructive.base : colors.foreground.primary,
+      marginBottom: "0.375rem",
+    };
+
+    const errorHintStyles: React.CSSProperties = {
+      marginTop: "0.375rem",
+      fontFamily: typography.fontFamily.mono,
+      fontSize: "0.625rem",
+      letterSpacing: "0.05em",
+      color: hasError ? colors.destructive.glow : colors.foreground.muted,
+    };
 
     return (
-      <div className={cn("w-full", className)}>
+      <div className={cn("w-full", className)} style={wrapperStyles}>
         {label && (
-          <label htmlFor={textareaId} className="block text-tactical text-primary mb-1.5">
+          <label htmlFor={textareaId} style={labelStyles}>
             {label}
           </label>
         )}
         <textarea
           ref={ref}
           id={textareaId}
-          className={cn(
-            "input-tactical w-full min-h-[100px] resize-y font-sans",
-            error && "border-destructive focus:border-destructive focus:ring-destructive/20"
-          )}
-          aria-invalid={error ? "true" : "false"}
-          aria-describedby={error ? errorId : hint ? hintId : undefined}
+          rows={rows}
+          className={cn("input-tactical")}
+          style={textareaStyles}
+          aria-invalid={hasError ? "true" : "false"}
+          aria-describedby={
+            hasError ? errorId : hasHint ? hintId : undefined
+          }
+          onFocus={(e) => {
+            Object.assign(e.currentTarget.style, focusStyles);
+            props.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = hasError
+              ? colors.destructive.base
+              : colors.border.input;
+            e.currentTarget.style.boxShadow = "none";
+            props.onBlur?.(e);
+          }}
           {...props}
         />
-        {error && (
-          <p id={errorId} className="mt-1.5 text-timestamp text-destructive-glow flex items-center gap-1.5">
-            <span className="text-destructive">[ERROR]</span>
+        {hasError && (
+          <p id={errorId} style={errorHintStyles} role="alert">
             {error}
           </p>
         )}
-        {hint && !error && (
-          <p id={hintId} className="mt-1.5 text-timestamp text-foreground-muted">
+        {hasHint && !hasError && (
+          <p id={hintId} style={errorHintStyles}>
             {hint}
           </p>
         )}
@@ -118,66 +279,63 @@ export const TerminalTextarea = React.forwardRef<HTMLTextAreaElement, TerminalTe
 
 TerminalTextarea.displayName = "TerminalTextarea";
 
-// Quick-add input bar for rapid entry
-interface QuickAddInputProps {
-  onSubmit: (value: string) => void;
-  placeholder?: string;
+/**
+ * QuickAddInput - Specialized input for quick-add patterns
+ */
+export interface QuickAddInputProps extends TerminalInputProps {
+  onAdd: (value: string) => void;
+  addLabel?: string;
   disabled?: boolean;
-  className?: string;
 }
 
-export function QuickAddInput({ onSubmit, placeholder = "NEW TASK...", disabled = false, className }: QuickAddInputProps) {
-  const [value, setValue] = React.useState("");
-  const inputRef = React.useRef<HTMLInputElement>(null);
+export const QuickAddInput = React.forwardRef<HTMLInputElement, QuickAddInputProps>(
+  ({ className, onAdd, addLabel = "ADD", disabled = false, ...props }, ref) => {
+    const [value, setValue] = React.useState("");
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && value.trim() && !disabled) {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && value.trim() && !disabled) {
+        e.preventDefault();
+        onAdd(value.trim());
+        setValue("");
+      }
+      props.onKeyDown?.(e);
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      onSubmit(value.trim());
-      setValue("");
-    }
-    if (e.key === "Escape") {
-      setValue("");
-      inputRef.current?.blur();
-    }
-  };
+      if (value.trim() && !disabled) {
+        onAdd(value.trim());
+        setValue("");
+      }
+    };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (value.trim() && !disabled) {
-      onSubmit(value.trim());
-      setValue("");
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className={cn("w-full", className)}>
-      <div className="relative flex items-center">
-        <span className="absolute left-3 text-primary-glow font-mono text-sm select-none">›</span>
-        <input
-          ref={inputRef}
-          type="text"
+    return (
+      <form onSubmit={handleSubmit} className={cn("w-full", className)}>
+        <TerminalInput
+          ref={ref}
+          {...props}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder={placeholder}
-          className="input-tactical w-full pl-8 bg-background/50 placeholder:text-foreground-muted/50"
-          autoFocus
+          suffix={
+            <button
+              type="submit"
+              disabled={!value.trim() || disabled}
+              className="btn-tactical btn-tactical-primary px-3 py-1.5 text-[0.625rem]"
+              style={{
+                minHeight: "auto",
+                opacity: value.trim() && !disabled ? 1 : 0.5,
+                pointerEvents: value.trim() && !disabled ? "auto" : "none",
+              }}
+            >
+              {addLabel}
+            </button>
+          }
         />
-        {value && (
-          <button
-            type="button"
-            onClick={() => setValue("")}
-            className="absolute right-3 text-foreground-muted hover:text-destructive-glow transition-colors"
-            aria-label="Clear input"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
-      </div>
-    </form>
-  );
-}
+      </form>
+    );
+  }
+);
+
+QuickAddInput.displayName = "QuickAddInput";
