@@ -35,6 +35,8 @@ interface Agent {
   systemPrompt: string;
   modelEndpoint: string;
   avatarIcon: string | null;
+  identity?: string | null;
+  operationalPrompt?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -307,13 +309,18 @@ function EditPromptModal({ agent, isOpen, onClose, onSave }: {
   agent: Agent | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (prompt: string) => void;
+  onSave: (data: { systemPrompt: string; identity: string; operationalPrompt: string }) => void;
 }) {
-  const [prompt, setPrompt] = React.useState("");
+  const [systemPrompt, setSystemPrompt] = React.useState("");
+  const [identity, setIdentity] = React.useState("");
+  const [operationalPrompt, setOperationalPrompt] = React.useState("");
+  const [activeTab, setActiveTab] = React.useState<"identity" | "operational" | "legacy">("identity");
 
   React.useEffect(() => {
     if (isOpen && agent) {
-      setPrompt(agent.systemPrompt);
+      setSystemPrompt(agent.systemPrompt);
+      setIdentity(agent.identity || "");
+      setOperationalPrompt(agent.operationalPrompt || "");
     }
   }, [isOpen, agent]);
 
@@ -325,7 +332,7 @@ function EditPromptModal({ agent, isOpen, onClose, onSave }: {
         <TacticalCard variant="active" withReticle className="flex flex-col overflow-hidden">
           <TacticalCardHeader className="flex flex-row items-center justify-between">
             <div>
-              <p className="text-tactical text-primary">EDIT SYSTEM PROMPT</p>
+              <p className="text-tactical text-primary">EDIT AGENT PERSONA</p>
               <p className="text-timestamp text-foreground-muted">{agent.name} • {rankLabels[agent.rank]}</p>
             </div>
             <button onClick={onClose} className="p-1 rounded hover:bg-accent transition-colors">
@@ -333,18 +340,102 @@ function EditPromptModal({ agent, isOpen, onClose, onSave }: {
             </button>
           </TacticalCardHeader>
           <TacticalCardContent className="flex-1 overflow-y-auto p-4">
-            <TerminalTextarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="SYSTEM PROMPT..."
-              className="h-[60vh] font-mono text-sm"
-              rows={20}
-            />
+            {/* Tab navigation */}
+            <div className="flex gap-1 mb-4 border-b border-card-border">
+              <button
+                onClick={() => setActiveTab("identity")}
+                className={`px-3 py-2 text-sm font-mono rounded-t transition-colors ${
+                  activeTab === "identity"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                IDENTITY
+              </button>
+              <button
+                onClick={() => setActiveTab("operational")}
+                className={`px-3 py-2 text-sm font-mono rounded-t transition-colors ${
+                  activeTab === "operational"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                OPERATIONAL
+              </button>
+              <button
+                onClick={() => setActiveTab("legacy")}
+                className={`px-3 py-2 text-sm font-mono rounded-t transition-colors ${
+                  activeTab === "legacy"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                LEGACY
+              </button>
+            </div>
+
+            {/* Tab content */}
+            {activeTab === "identity" && (
+              <div className="space-y-4">
+                <label className="block text-xs font-mono text-foreground-muted mb-1">
+                  IDENTITY — Stable "who am I" (persistent across tasks)
+                </label>
+                <TerminalTextarea
+                  value={identity}
+                  onChange={(e) => setIdentity(e.target.value)}
+                  placeholder="e.g., You are GENERAL VANCE, supreme strategic commander..."
+                  className="h-[40vh] font-mono text-sm"
+                  rows={15}
+                />
+                <p className="text-xs text-foreground-muted">
+                  This defines the agent's core identity, rank, and character. Persists across all tasks.
+                </p>
+              </div>
+            )}
+
+            {activeTab === "operational" && (
+              <div className="space-y-4">
+                <label className="block text-xs font-mono text-foreground-muted mb-1">
+                  OPERATIONAL PROMPT — Default task framing (can vary by context)
+                </label>
+                <TerminalTextarea
+                  value={operationalPrompt}
+                  onChange={(e) => setOperationalPrompt(e.target.value)}
+                  placeholder="e.g., Think in campaigns, not tasks. Prioritize ruthlessly..."
+                  className="h-[40vh] font-mono text-sm"
+                  rows={15}
+                />
+                <p className="text-xs text-foreground-muted">
+                  This defines how the agent approaches tasks. Can be overridden per-request.
+                </p>
+              </div>
+            )}
+
+            {activeTab === "legacy" && (
+              <div className="space-y-4">
+                <label className="block text-xs font-mono text-foreground-muted mb-1">
+                  LEGACY SYSTEM PROMPT — Deprecated (kept for backward compatibility)
+                </label>
+                <TerminalTextarea
+                  value={systemPrompt}
+                  onChange={(e) => setSystemPrompt(e.target.value)}
+                  placeholder="FULL SYSTEM PROMPT..."
+                  className="h-[40vh] font-mono text-sm"
+                  rows={15}
+                />
+                <p className="text-xs text-destructive-glow">
+                  ⚠ Legacy field. Prefer using Identity + Operational Prompt instead.
+                </p>
+              </div>
+            )}
           </TacticalCardContent>
           <TacticalCardFooter className="flex justify-end gap-2 border-t border-card-border">
             <TacticalButton variant="ghost" onClick={onClose}>CANCEL</TacticalButton>
-            <TacticalButton variant="primary" onClick={() => { onSave(prompt); onClose(); }} leftIcon={<Check className="h-4 w-4" />}>
-              SAVE PROMPT
+            <TacticalButton variant="primary" onClick={() => {
+              onSave({ systemPrompt, identity, operationalPrompt });
+              onClose();
+            }} leftIcon={<Check className="h-4 w-4" />}>
+              SAVE PERSONA
             </TacticalButton>
           </TacticalCardFooter>
         </TacticalCard>
@@ -422,6 +513,7 @@ export function TeamClient() {
           message: content,
           systemPrompt: selectedAgent.systemPrompt,
           model: selectedAgent.modelEndpoint,
+          channel: "internal",
         }),
       });
 
@@ -471,14 +563,25 @@ export function TeamClient() {
     setShowEditModal(true);
   }
 
-  function handleSavePrompt(prompt: string) {
+  function handleSavePrompt(data: { systemPrompt: string; identity: string; operationalPrompt: string }) {
     if (!editingAgent) return;
-    // In a real implementation, this would call an API to update the agent
+    // Call API to persist changes
+    fetch(`/api/agents/${editingAgent.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemPrompt: data.systemPrompt,
+        identity: data.identity,
+        operationalPrompt: data.operationalPrompt,
+      }),
+    }).catch((err) => console.error("Failed to update agent:", err));
+
+    // Update local state immediately for responsiveness
     setAgents((prev) => prev.map((a) =>
-      a.id === editingAgent.id ? { ...a, systemPrompt: prompt } : a
+      a.id === editingAgent.id ? { ...a, systemPrompt: data.systemPrompt, identity: data.identity, operationalPrompt: data.operationalPrompt } : a
     ));
     if (selectedAgent?.id === editingAgent.id) {
-      setSelectedAgent((prev) => prev ? { ...prev, systemPrompt: prompt } : null);
+      setSelectedAgent((prev) => prev ? { ...prev, systemPrompt: data.systemPrompt, identity: data.identity, operationalPrompt: data.operationalPrompt } : null);
     }
     setEditingAgent(null);
   }

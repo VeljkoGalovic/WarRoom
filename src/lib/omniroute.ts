@@ -5,8 +5,7 @@
  * Defaults to free NVIDIA NIM models
  */
 
-const OMNIROUTE_BASE_URL = process.env.OMNIROUTE_BASE_URL || "https://api.omniroute.ai/v1";
-const OMNIROUTE_API_KEY = process.env.OMNIROUTE_API_KEY || "";
+import { resolveAgentProviderConfig, buildApiUrl, getProviderHeaders, ProviderConfig } from "./providers";
 
 interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -29,12 +28,12 @@ interface ChatCompletionResponse {
   }>;
 }
 
-async function fetchOmniroute(endpoint: string, options: RequestInit = {}) {
-  const response = await fetch(`${OMNIROUTE_BASE_URL}${endpoint}`, {
+async function fetchOmniroute(endpoint: string, options: RequestInit = {}, provider?: ProviderConfig) {
+  const providerConfig = provider || resolveAgentProviderConfig({ modelEndpoint: "", providerName: "omniroute" });
+  const response = await fetch(buildApiUrl(providerConfig, endpoint), {
     ...options,
     headers: {
-      "Authorization": `Bearer ${OMNIROUTE_API_KEY}`,
-      "Content-Type": "application/json",
+      ...getProviderHeaders(providerConfig),
       ...options.headers,
     },
   });
@@ -73,6 +72,8 @@ export async function streamChatCompletion(
     ? [{ role: "system" as const, content: systemPrompt }, ...messages]
     : messages;
 
+  const providerConfig = resolveAgentProviderConfig({ modelEndpoint: model, providerName: "omniroute" });
+
   const response = await fetchOmniroute("/chat/completions", {
     method: "POST",
     body: JSON.stringify({
@@ -82,7 +83,7 @@ export async function streamChatCompletion(
       temperature: 0.7,
       max_tokens: 4096,
     }),
-  });
+  }, providerConfig);
 
   const reader = response.body?.getReader();
   const decoder = new TextDecoder();
@@ -131,6 +132,8 @@ export async function chatCompletion(
     ? [{ role: "system" as const, content: systemPrompt }, ...messages]
     : messages;
 
+  const providerConfig = resolveAgentProviderConfig({ modelEndpoint: model, providerName: "omniroute" });
+
   const response = await fetchOmniroute("/chat/completions", {
     method: "POST",
     body: JSON.stringify({
@@ -139,7 +142,7 @@ export async function chatCompletion(
       temperature: 0.7,
       max_tokens: 4096,
     }),
-  });
+  }, providerConfig);
 
   const data: ChatCompletionResponse = await response.json();
   return data.choices[0]?.message?.content || "";
