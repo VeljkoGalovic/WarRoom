@@ -1,101 +1,132 @@
-# WarRoom — Agent Capabilities Implementation Prompt
+# WarRoom — War Map Static Mockup Implementation Prompt
 
-You are working on WarRoom, a Next.js 16 (App Router, Turbopack) productivity app that gamifies personal goals as a sci-fi military campaign. The stack is Postgres + Prisma + Redis + NextAuth, styled with Tailwind and shadcn/ui. A skeleton already exists, including an Agent model in Prisma, an agents API surface, and a chat route that currently calls a single hardcoded provider endpoint.
+You are working on WarRoom, a Next.js 16 (App Router, Turbopack) productivity app that gamifies personal goals as a sci-fi military campaign. The stack is Postgres + Prisma + Redis + NextAuth, styled with Tailwind and shadcn/ui. The AI agent layer is already implemented and working. Do not touch it.
 
-Your job is to implement the plan below, step by step. Do not skip steps. Do not refactor unrelated code.
+Your job is to build a **static visual mockup** of the War Map — the central strategic view of the app. This is a design-first task. No real data. No API calls. No database. No state beyond local React state for selection and hover. The goal is to nail the look and feel before anything is wired up.
+
+This is Phase 2 of a six-phase redesign. Later phases will extract components, wire data, add interaction, and polish. You are building the disposable prototype that everything else will be based on. Treat it as a design study, not production code.
 
 ## Non-negotiable rules before you touch anything
 
-1. BEFORE making any change, inspect the current implementation. Read the Prisma schema, the agents API routes, the chat route, the environment file, and any existing components that render or call agents. Do not assume file names, folder structure, or existing field names. Discover them.
-2. Produce a short written summary of what you found BEFORE writing any code. List the actual files you will modify, the actual Prisma models you will change, and any conflicts between what exists and what this prompt assumes. If something in this prompt contradicts reality, flag it and ask before proceeding.
-3. Make changes incrementally. After each numbered step, stop, verify the app still builds and runs, and only then proceed. Do not batch all changes into one commit.
-4. Never delete existing data or drop existing columns without a migration that preserves data. If a column must be renamed, add the new one, migrate data, then remove the old one in a separate step.
-5. Do not introduce paid dependencies. Every external service must have a free tier or be self-hosted. Do not add a cloud vector database, a paid LLM proxy, or a managed memory service.
-6. Keep the codebase coherent. If you find existing code that already does part of this plan, adapt it rather than duplicating it.
+1. BEFORE writing any code, inspect the current project structure. Read the existing app router layout, the global stylesheet, the Tailwind config, the shadcn/ui setup, the font configuration, and the current War Map implementation if one exists. Understand the existing conventions before adding anything.
+2. Produce a short written summary of what you found BEFORE writing code: the fonts already installed, the Tailwind theme tokens already defined, the existing color system, the existing component conventions. Flag any conflicts between the design spec below and what exists.
+3. Do NOT modify any existing pages, routes, components, or styles. Build the mockup as a completely isolated route at `/warmap-preview` with its own self-contained styles scoped to that route. If you need to add fonts or theme tokens, do so in a way that doesn't affect the rest of the app — prefer route-scoped CSS variables and a route-scoped font import over global changes.
+4. Do NOT wire anything to Prisma, the agents API, or any existing data source. Use hardcoded fake data defined inside the mockup route file.
+5. Do NOT touch the AI agent code, the chat route, the memory system, or the Telegram adapter. They are out of scope.
+6. Do NOT install new heavy dependencies. If you need an animation library, use Framer Motion only if it is already installed. If you need a canvas library, prefer plain canvas or SVG over adding a new package. If you absolutely must add a dependency, ask first and justify it.
+7. Verify the app builds and runs after every significant change. Do not leave the project in a broken state.
 
-## High-level architecture you are building toward
+## The design direction
 
-The app talks to a single internal Agent Service. The Agent Service is the only place that assembles prompts, loads memory, and calls the LLM. Both the WarRoom UI and an external Telegram bot are thin adapters that call the same Agent Service. LLM calls go through a locally hosted OmniRoute instance which aggregates free provider tiers (NVIDIA NIM, OpenRouter, etc.) behind one OpenAI-compatible endpoint. Memory is stored in the existing Postgres database using pgvector. Persona is split from operational prompt, with channel overlays that suppress persona voice on external outputs.
+The War Map is a **holographic tactical display**, not a webpage. The mental model is: the user is standing in front of a projected command table, and the entire view is what that projection looks like from their side. Everything on screen should feel like it is being rendered by a machine in-world, not drawn by a designer for a consumer.
 
-## Step 1 — Environment and provider configuration
+The aesthetic is a fusion of three references:
+- **XCOM 2 Geoscape** — a strategic layer floating above a globe, region-based threat with color temperature, a sense of time passing, assets placed on regions rather than listed.
+- **Stellaris galaxy view** — spiral structure, hyperlanes between nodes, territory ownership, fog of war, sectors.
+- **Star Wars tactical displays** — monochrome base with one accent, scanlines and bloom, concentric rings and radial menus, stencil or monospace typography, a fleet/battle-group metaphor.
 
-Goal: every agent call goes through OmniRoute, and no provider endpoint is hardcoded in application code.
+The rule for every decision: if it feels like a consumer dashboard, it is wrong. If it feels like a targeting computer, it is right.
 
-1. Inspect the current environment file and the existing chat route to find where the provider base URL and API key are currently referenced.
-2. Introduce environment variables for the OmniRoute base URL and API key. The base URL should default to a local address (OmniRoute typically runs on localhost on a specific port — discover the correct port by checking how OmniRoute is currently configured on this machine, or ask). The API key can be a placeholder if OmniRoute does not require one locally.
-3. Remove any hardcoded provider domain from application code. There should be exactly one place in the codebase that knows the provider base URL, and it should read from environment.
-4. Add a small provider configuration module that resolves a provider config object from an agent record. The module should support at minimum a default OmniRoute configuration and be structured so additional named providers can be added later without touching call sites.
-5. Verify the app builds and the existing chat route still compiles. Do not yet change its behavior.
+## Palette (hard limit, five colors)
 
-## Step 2 — Harden the chat route
+Use exactly these colors. No others. Derived shades are allowed only by adjusting opacity, never by introducing new hues.
 
-Goal: the chat route never streams a broken response, always returns a clean error, and supports cancellation.
+- **Void** `#050810` — deep background, near-black with a hint of blue.
+- **Holo Cyan** `#4DD8E8` — primary UI lines, labels, neutral elements. This is the "ink."
+- **Progress Amber** `#FFB347` — active campaigns, in-progress, currently engaged.
+- **Conquest Green** `#3FE0A0` — completed, secured, conquered.
+- **Threat Red** `#FF4D5E` — at-risk, overdue, contested, failing.
 
-1. Read the current chat route in full.
-2. Restructure it so the upstream fetch is fully resolved and validated before any streaming begins. If the upstream responds with a non-success status, return a structured JSON error to the client with an appropriate status code (502 for upstream failures, 404 for unknown agent, 400 for malformed input). Do not pipe an unvalidated upstream body to the client.
-3. Add an AbortSignal to the upstream fetch and wire it to the incoming request so that if the client disconnects, the upstream call is cancelled.
-4. Add a timeout to the upstream call. If the provider does not respond within a reasonable window, fail cleanly.
-5. Log provider failures to the server console with enough context to debug (agent id, provider base URL, status, truncated body). Do not log API keys.
-6. Do not change the response shape that the existing UI expects for successful calls. If you must change it, update the calling UI in the same step.
-7. Verify by sending a message to an agent with OmniRoute running and with OmniRoute stopped. Both cases should produce clean, distinguishable outcomes.
+If the app already has a theme system, do NOT override it globally. Define these as route-scoped CSS variables inside the mockup route.
 
-## Step 3 — Split persona from operational prompt
+## Typography (two fonts maximum)
 
-Goal: each agent has a stable identity, a per-call operational prompt, and an explicit channel overlay mechanism.
+- **Display / labels:** a technical condensed sans or stencil. Prefer `Rajdhani`, `Orbitron`, `Chakra Petch`, or `Share Tech Mono` from Google Fonts. Use for headers, node labels, tactical readouts. All caps for labels.
+- **Body / data:** a clean monospace. Prefer `JetBrains Mono`, `IBM Plex Mono`, or fall back to the existing monospace font if one is already in the project. Use for any text longer than a label.
 
-1. Inspect the current Agent Prisma model. Identify the existing prompt field.
-2. Add fields to the Agent model for: identity (the stable "who am I" text), operational prompt (default task framing), and any persona metadata you need (voice, boundaries). Keep the existing prompt field if it exists and backfill it into one of the new fields via a migration; do not lose existing values.
-3. Design a prompt assembly function that takes an agent, a channel identifier (internal app, telegram, external communication), a task description, and relevant memories, and returns the final system prompt string. The assembly must apply channel overlays. For the external communication channel, the overlay must instruct the model to strip persona voice and output neutral, professional language. For internal channels, the overlay should preserve persona voice.
-4. Update the chat route to use this assembly function instead of whatever prompt construction exists today.
-5. Verify with two calls to the same agent: one tagged as internal and one tagged as external. The internal call should sound in-character; the external call should not.
+Load these as route-scoped fonts if possible. If Next.js font optimization requires global loading, import them and use them only within the mockup route's class scope.
 
-## Step 4 — Persistent memory
+## Shape language
 
-Goal: agents remember past interactions and can retrieve relevant memories on each call.
+- Nodes are **hexagons**. Use SVG polygons or CSS clip-path, not a library.
+- Panels have **chamfered corners** — angled cuts at the corners, not rounded corners. Thin 1px borders. Occasional corner bracket accents (small L-shaped marks at panel corners) for technical feel.
+- Connections between nodes are **curved hyperlanes**, not straight lines. Use SVG quadratic or cubic bezier paths.
+- Every element has a **subtle outer glow**, never a drop shadow. Use `filter: drop-shadow()` with the element's own color at low opacity, or box-shadow with a colored spread.
+- No rounded corners anywhere except progress rings and circular UI elements.
 
-1. Confirm whether the pgvector extension is available on the Postgres instance. If it is not installed, install it and enable it in the database. Document how it was enabled.
-2. Add a Memory model to the Prisma schema with at minimum: id, agentId, userId, type (distinguish episodic from profile), content, embedding vector, metadata, createdAt. Add appropriate indexes.
-3. Choose an embedding approach. It must be free and callable from the server. Prefer routing embeddings through the same OmniRoute instance if it exposes an embeddings endpoint; otherwise use a small local embedding model served from the Ubuntu server. Do not use a paid embedding API. Write the choice and the reasoning in a short comment or doc.
-4. Implement a memory service with two functions: store a memory (compute embedding, insert row) and retrieve relevant memories (embed the query, do a vector similarity search scoped to the agent and user, return top-K).
-5. Wire the memory service into the chat route. Before calling the LLM, retrieve relevant memories and inject them into the assembled system prompt. After a successful response, store the exchange as an episodic memory. Keep the storage step non-blocking where possible so it does not delay the user response.
-6. Verify by having a conversation with an agent, restarting the server, and having another conversation where the agent references something from the first.
+## Motion grammar
 
-## Step 5 — Telegram adapter
+Keep motion subtle and constant. The display should feel alive, never busy.
 
-Goal: the same agents are reachable from a Telegram group, using the same Agent Service, sharing the same memory.
+- **Background:** a slowly rotating galaxy or starfield at very low opacity (10–15%). Should never compete with foreground content. Acceptable approaches: an SVG spiral with slow rotation, a canvas starfield with slow drift and parallax, or a very subtle animated gradient with noise. Choose the cheapest approach that looks good. No particles, no explosions, no flashes.
+- **Nodes:** pulse gently when active (a slow breathing animation, 3–4 second cycle), flicker briefly on hover, stay static when idle. Do not animate every node simultaneously in the same phase — offset the animation delays so the map feels organic.
+- **Hyperlanes:** animated dash flow along the direction of progress. Use SVG `stroke-dasharray` + `stroke-dashoffset` animation. Speed should indicate momentum — faster for recently active goals, slower or static for stalled ones.
+- **Transitions:** when selecting a node, the detail panel should appear with a scanline wipe or a holographic materialize effect, not a fade. When deselecting, reverse.
 
-1. Confirm with the user which Telegram bot token to use and which group (and topics, if a supergroup with topics) map to which agents. Do not invent a mapping.
-2. Create a separate small service in the repository (its own folder, its own entry point) that runs independently of the Next.js process. It should be a thin adapter: receive a Telegram message, determine which agent and which user it maps to, call the Agent Service (the same internal endpoint the UI uses), and send the response back to the correct topic or chat.
-3. Do not put any LLM logic, prompt assembly, or memory logic inside the Telegram adapter. It must only translate between Telegram and the Agent Service.
-4. Authenticate the adapter to the Agent Service. The simplest acceptable approach for single-user personal use is a shared secret in an environment variable that the adapter sends and the service verifies. Do not expose the Agent Service publicly without this.
-5. Provide a systemd unit file (or equivalent) so the adapter runs as a background service on the Ubuntu server, restarts on failure, and starts on boot. Write a short README section explaining how to install and start it.
-6. Verify by messaging an agent from Telegram and confirming the same conversation context appears in the WarRoom UI.
+Do not add motion that isn't listed here without asking.
 
-## Step 6 — External output de-personalization
+## Layout
 
-Goal: no external-facing artifact ever contains persona voice.
+The viewport is divided into four zones:
 
-1. Identify every code path that produces an artifact intended for someone other than the user (emails, marketing copy, documents). If none exist yet, add a single reusable function now that future features will call, and document it.
-2. The function must take raw agent output and a target channel, and return a rewritten version with persona voice removed. Implement it as a second LLM call through OmniRoute with a strict neutralization prompt, plus a lightweight post-check that flags any remaining persona tokens (rank words, agent names, military jargon) and retries once if found.
-3. Route all external-producing features through this function. Do not allow any feature to bypass it.
-4. Verify with a deliberately persona-heavy draft and confirm the output is neutral.
+1. **Top bar (thin, ~48px).** Mission title on the left in display font all caps (e.g., "CAMPAIGN VISUALIZER — TACTICAL OVERVIEW"). On the right, a minimal status strip: a live clock, count of active fronts, count of conquered objectives. Everything in holo cyan, small, all caps.
+2. **Central map canvas.** Occupies the majority of the viewport. Contains the galaxy background, the nodes, the hyperlanes, the fog, the command center at the center, and the tactical readout in a corner. This is where the eye lives.
+3. **Right detail panel (~360px, collapsible).** Empty until a node is selected. When selected, slides in with the scanline transition and shows: node name, type, progress ring with percentage, list of milestones, list of recent log entries, and a placeholder for agent comms. All in holo cyan and amber. Chamfered corners, thin borders, corner brackets.
+4. **Bottom bar (thin, ~40px).** Tactical readout — a live-scrolling log of fake events rendered like a targeting computer feed ("14:22 — MILESTONE SECURED — 5K TIME"). Events fade as new ones appear. Keep the last 5–8 visible.
 
-## Step 7 — Documentation and cleanup
+Add a legend in a corner of the map canvas: a small panel showing the five palette colors with their meanings. Interactive in a later phase; static for now.
 
-Goal: the implementation is legible to future-you.
+## The map contents (fake data)
 
-1. Add a section to the project README describing the agent architecture: Agent Service, OmniRoute, memory, Telegram adapter, channel overlays.
-2. Document every new environment variable.
-3. Document how to run OmniRoute locally, how to run the Telegram adapter, and how to enable pgvector.
-4. Remove any dead code, unused imports, or orphaned endpoints that resulted from this work.
-5. Do a final pass: search the codebase for any remaining hardcoded provider URLs, any place that constructs prompts outside the assembly function, and any place that would send raw agent output externally without going through the de-personalization function. Fix what you find.
+Design the map to contain:
 
-## What to report back after each step
+- **One command center node** at the center of the canvas. Larger than the others, distinct shape (maybe an octagon or a double hexagon), always pulse-active. This is "the user."
+- **Five to eight goal nodes** arranged in a rough spiral around the command center, as if they orbit it. Use a spiral layout, not a grid, not a circle. Stagger them so the map reads as organic, not mathematical.
+- **Hyperlanes** connecting each goal node back to the command center, and connecting some goal nodes to each other where they are related. Use curved paths. Animate flow toward the command center for completed goals and away from it for in-progress goals.
+- **Two to three of the goal nodes should be visually distinct:**
+  - One **conquered** — full conquest green, static, with a "CONQUERED" tag.
+  - One **in progress** — progress amber, pulsing, with a progress ring around the hexagon showing a percentage.
+  - One **at risk** — threat red, flickering intermittently, with a "CONTACT" or "AT RISK" tag.
+  - The rest are neutral holo cyan with small progress indicators.
+- **Fog of war** on two or three positions where future goals might go — dark regions with faint question marks or unknown markers. These are not interactive in this phase.
 
-For every numbered step, report:
-- What you inspected and what you found.
-- What you changed, with a short rationale.
-- What you verified and how.
-- Anything you could not do, could not verify, or that contradicts this prompt.
+Fake the goal names with on-theme titles that fit the war-room framing without being silly. Examples: "TACTICAL PHYSICAL," "DEPLOY WAR," "REACH CODEFORCES," "MASTER SYSTEMS," "INTERNATIONAL MATH." Use these or invent similar ones. Keep them short.
 
-If at any point reality disagrees with an assumption in this prompt, stop and ask. Do not guess. Do not silently work around a mismatch.
+## What to build, in this exact order
+
+1. **Route scaffold.** Create the `/warmap-preview` route. Confirm it renders a blank page with the void background color.
+2. **Galaxy background.** Add the slowly rotating starfield or spiral galaxy at low opacity. Verify it looks good and stays out of the way. Do not proceed until this feels right — it sets the tone for everything else.
+3. **Layout skeleton.** Add the four-zone layout (top bar, map canvas, right panel space, bottom bar) with placeholder text in each zone. Confirm the proportions feel right at typical viewport sizes.
+4. **Node primitives.** Build a single hexagon node component with SVG. Give it a label, a progress ring, and a state prop (neutral, active, conquered, at-risk). Render one of each state in a row on the canvas to check the visual language.
+5. **Position nodes on the spiral.** Replace the test row with the real spiral layout. Add the command center at the center. Verify positions look organic.
+6. **Hyperlanes.** Draw curved SVG paths between nodes. Add the animated dash flow. Tune the curve control points so paths don't cross awkwardly.
+7. **Fog of war.** Add two or three fogged positions with faint markers.
+8. **Legend.** Add the legend panel in a corner of the canvas.
+9. **Selection interaction.** Clicking a node should open the right detail panel with the scanline transition. Clicking empty space closes it. Local React state only.
+10. **Detail panel contents.** Fill the detail panel with the node name, progress ring, fake milestone list, and fake log entries. Use the display and monospace fonts correctly.
+11. **Top bar and bottom bar.** Fill them with the described content — mission title, clock, counts, tactical readout feed. Fake events can be static or cycle through a small array with a timer.
+12. **Polish pass.** Tune glows, animation timings, font sizes, and spacing. This is where you make it feel premium rather than functional.
+
+## What NOT to build in this phase
+
+- No real data from Prisma or any API.
+- No agent comms integration — a placeholder panel is fine.
+- No radial menus (that is Phase 5).
+- No sound (that is Phase 6).
+- No time scrubbing (that is Phase 5).
+- No mobile layout. Desktop only for this mockup. Mobile is a later concern.
+- No accessibility polish. This is a visual prototype; accessibility comes when it is extracted into production components.
+
+## What to report back
+
+When done, report:
+
+- The exact route to view the mockup (`/warmap-preview`).
+- Which fonts you used and how you loaded them.
+- Which technique you used for the galaxy background and why.
+- Any dependencies you added, with justification.
+- Any place where the design spec was ambiguous and what you chose.
+- Anything you could not do or that contradicts this prompt.
+- A short list of the things you think look weakest, so the user knows where to focus iteration.
+
+Do not declare the task complete until the mockup looks like a coherent piece of a sci-fi tactical display, not a React page with hexagons on it. If it looks like a dashboard, it is wrong. If it looks like a targeting computer, it is right.
