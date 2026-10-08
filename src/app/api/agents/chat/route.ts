@@ -103,9 +103,10 @@ export async function POST(request: Request) {
     await prisma.activityLog.create({
       data: {
         userId: user.id,
+        agentId,
         category: "CHAT",
-        message: `User → ${agent.name}: ${message}`,
-        metadata: { agentId, role: "user" },
+        message,                              // the user's message
+        metadata: { role: "user" },           // no agentId here — it's in the column now
       },
     });
 

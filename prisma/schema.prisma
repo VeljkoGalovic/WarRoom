@@ -65,10 +65,9 @@ model Agent {
   name          String
   rank          String   // GENERAL, CAPTAIN, SPECIALIST, LIEUTENANT, SERGEANT
   role          String   @db.Text
-  // Persona fields (split from operational prompt)
-  identity         String?  @db.Text       // Stable "who am I" - backfilled from systemPrompt
-  operationalPrompt String?  @db.Text       // Default task framing
-  systemPrompt     String   @db.Text       // Legacy field - kept for backward compat, will be deprecated
+  identity         String?  @db.Text
+  operationalPrompt String?  @db.Text
+  systemPrompt     String   @db.Text
   modelEndpoint    String
   avatarIcon       String?
   isActive         Boolean  @default(true)
@@ -78,6 +77,7 @@ model Agent {
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   goals            Goal[]
   memories         Memory[]
+  activityLogs     ActivityLog[]
 
   @@index([userId])
 }
@@ -89,9 +89,12 @@ model ActivityLog {
   message   String   @db.Text
   metadata  Json?
   userId    String
+  agentId   String?
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent     Agent?   @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([agentId])
   @@index([timestamp])
   @@index([category])
 }

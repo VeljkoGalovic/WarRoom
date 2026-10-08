@@ -9,13 +9,13 @@ export async function GET(
     const { id } = await params;
 
     const messages = await prisma.activityLog.findMany({
-      where: {
-        userId: id,
-        category: "CHAT",
-      },
-      orderBy: { timestamp: "asc" },
-      take: 100,
-    });
+        where: {
+          agentId: id,          // ← was userId: id
+          category: "CHAT",
+        },
+        orderBy: { timestamp: "asc" },
+        take: 100,
+      });
 
     return NextResponse.json(messages);
   } catch (error) {
