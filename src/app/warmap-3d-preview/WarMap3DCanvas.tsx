@@ -146,24 +146,46 @@ const FOG_POSITIONS = [
 // STATE MANAGEMENT
 // ============================================================================
 
+interface LogEntry {
+  time: string;
+  event: string;
+  detail: string;
+  category: string;
+}
+
 interface WarMapState {
   selectedNodeId: string | null;
   hoveredNodeId: string | null;
   cameraTarget: THREE.Vector3;
   isAnimating: boolean;
+  logEntries: LogEntry[];
   setSelectedNode: (id: string | null) => void;
   setHoveredNode: (id: string | null) => void;
   setCameraTarget: (target: THREE.Vector3, animate?: boolean) => void;
+  addLogEntry: (entry: LogEntry) => void;
 }
 
-const useWarMapStore = create<WarMapState>((set) => ({
+const INITIAL_LOG_ENTRIES: LogEntry[] = [
+  { time: "14:22", event: "MILESTONE SECURED", detail: "TACTICAL PHYSICAL — 5K TIME", category: "Physical Training" },
+  { time: "14:18", event: "HYPERLANE ESTABLISHED", detail: "GOAL-2 → GOAL-3 LINK ACTIVE", category: "System Engineering" },
+  { time: "14:15", event: "CONTACT LOST", detail: "REACH CODEFORCES — SIGNAL DEGRADED", category: "Codeforces/Algorithmic" },
+  { time: "14:10", event: "SECTOR SCAN COMPLETE", detail: "FOG SECTOR 7 — UNKNOWN SIGNATURES", category: "System Engineering" },
+  { time: "14:05", event: "RESOURCE ALLOCATED", detail: "DEPLOY WAR — +15% MOMENTUM", category: "SaaS Architecture" },
+  { time: "13:58", event: "THREAT DETECTED", detail: "SECTOR 3 — HOSTILE ACTIVITY", category: "System Engineering" },
+  { time: "13:52", event: "LINK ESTABLISHED", detail: "COMMAND ↔ SECURE COMMS", category: "System Engineering" },
+  { time: "13:47", event: "INTEL UPDATE", detail: "MASTER SYSTEMS — TARGET ACQUIRED", category: "Strategic Analysis" },
+];
+
+export const useWarMapStore = create<WarMapState>((set) => ({
   selectedNodeId: null,
   hoveredNodeId: null,
   cameraTarget: new THREE.Vector3(0, 0, 0),
   isAnimating: false,
+  logEntries: INITIAL_LOG_ENTRIES,
   setSelectedNode: (id) => set({ selectedNodeId: id }),
   setHoveredNode: (id) => set({ hoveredNodeId: id }),
   setCameraTarget: (target, animate = true) => set({ cameraTarget: target, isAnimating: animate }),
+  addLogEntry: (entry) => set((state) => ({ logEntries: [entry, ...state.logEntries].slice(0, 50) })),
 }));
 
 // ============================================================================
@@ -677,326 +699,6 @@ function CameraController() {
   return null;
 }
 
-// Detail Panel - slides in from right
-export function DetailPanel() {
-  const { selectedNodeId, setSelectedNode } = useWarMapStore(
-    useShallow((s) => ({
-      selectedNodeId: s.selectedNodeId,
-      setSelectedNode: s.setSelectedNode,
-    }))
-  );
-  const node = FAKE_NODES.find((n) => n.id === selectedNodeId);
-
-  if (!node) return null;
-
-  const color = node.state === "command" ? "#4DD8E8" :
-                node.state === "conquered" ? "#3FE0A0" :
-                node.state === "active" ? "#FFB347" :
-                node.state === "at-risk" ? "#FF4D5E" : "#4DD8E8";
-
-  const progress = node.progress || 0;
-  const circumference = 2 * Math.PI * 28;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: "360px",
-        background: "rgba(5, 8, 16, 0.98)",
-        borderLeft: "1px solid rgba(77, 216, 232, 0.3)",
-        backdropFilter: "blur(12px)",
-        display: "flex",
-        flexDirection: "column",
-        animation: "slideIn 0.4s ease-out forwards",
-        boxShadow: "-20px 0 40px rgba(0, 0, 0, 0.5), inset 1px 0 0 #4DD8E8",
-        zIndex: 100,
-        pointerEvents: "auto",
-      }}
-    >
-      <style>{`
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
-
-      {/* Close button */}
-      <button
-        onClick={() => setSelectedNode(null)}
-        style={{
-          position: "absolute",
-          top: "12px",
-          right: "12px",
-          width: "24px",
-          height: "24px",
-          background: "transparent",
-          border: "1px solid rgba(77, 216, 232, 0.3)",
-          color: "#4DD8E8",
-          fontFamily: "var(--wm-font-mono)",
-          fontSize: "14px",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        ×
-      </button>
-
-      {/* Header */}
-      <div style={{ padding: "24px 20px 16px", borderBottom: "1px solid rgba(77, 216, 232, 0.2)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-          <div>
-            <div style={{
-              fontFamily: "var(--wm-font-display)",
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "#4DD8E8",
-              opacity: 0.5,
-              marginBottom: "4px",
-            }}>
-              OBJECTIVE
-            </div>
-            <div style={{
-              fontFamily: "var(--wm-font-display)",
-              fontSize: "1rem",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color,
-              textShadow: `0 0 8px ${color}`,
-            }}>
-              {node.name}
-            </div>
-          </div>
-          <div style={{
-            fontFamily: "var(--wm-font-display)",
-            fontSize: "0.55rem",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color,
-            padding: "4px 10px",
-            border: `1px solid ${color}`,
-            background: `${color}20`,
-            clipPath: "polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px)",
-          }}>
-            {node.state.toUpperCase().replace("-", " ")}
-          </div>
-        </div>
-
-        {/* Progress Ring */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <svg width="64" height="64" style={{ transform: "rotate(-90deg)" }}>
-            <circle cx="32" cy="32" r="28" fill="none" stroke="#4DD8E8" strokeWidth="3" strokeOpacity={0.15} />
-            <circle
-              cx="32" cy="32" r="28"
-              fill="none"
-              stroke={color}
-              strokeWidth="4"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              style={{ filter: `drop-shadow(0 0 6px ${color})`, transition: "stroke-dashoffset 0.5s ease" }}
-            />
-            <text x="32" y="36" textAnchor="middle" fill="#4DD8E8" fontFamily="var(--wm-font-display)" fontSize="14" fontWeight={700} style={{ transform: "rotate(90deg)", transformOrigin: "32px 32px" }}>
-              {progress}%
-            </text>
-          </svg>
-          <div>
-            <div style={{ fontFamily: "var(--wm-font-display)", fontSize: "0.55rem", color: "#4DD8E8", opacity: 0.5, marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              COMPLETION
-            </div>
-            <div style={{ fontFamily: "var(--wm-font-mono)", fontSize: "0.75rem", color: "#4DD8E8" }}>
-              {node.state === "conquered" ? "MISSION COMPLETE" : node.state === "at-risk" ? "CRITICAL — INTERVENTION REQUIRED" : "IN PROGRESS"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Milestones */}
-      <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
-        <div style={{
-          fontFamily: "var(--wm-font-display)",
-          fontSize: "0.6rem",
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "#4DD8E8",
-          opacity: 0.5,
-          marginBottom: "12px",
-          borderBottom: "1px solid rgba(77, 216, 232, 0.1)",
-          paddingBottom: "8px",
-        }}>
-          MILESTONES
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {MILESTONES.filter(m => m.nodeId === node.id).map((m) => (
-            <div
-              key={m.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "8px 10px",
-                background: m.completed ? "rgba(63, 224, 160, 0.1)" : "transparent",
-                border: `1px solid ${m.completed ? "#3FE0A0" : "rgba(77, 216, 232, 0.2)"}`,
-                clipPath: "polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px)",
-              }}
-            >
-              <div style={{
-                width: "10px", height: "10px",
-                border: `1px solid ${m.completed ? "#3FE0A0" : "rgba(77, 216, 232, 0.3)"}`,
-                background: m.completed ? "#3FE0A0" : "transparent",
-                clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
-              }} />
-              <div style={{
-                fontFamily: "var(--wm-font-mono)", fontSize: "0.7rem",
-                color: m.completed ? "#3FE0A0" : "#4DD8E8",
-                opacity: m.completed ? 1 : 0.7,
-                textTransform: "uppercase", letterSpacing: "0.05em", flex: 1,
-              }}>
-                {m.title}
-              </div>
-              {m.completed && <div style={{ fontFamily: "var(--wm-font-display)", fontSize: "0.55rem", fontWeight: 700, color: "#3FE0A0", letterSpacing: "0.1em" }}>SECURED</div>}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Top Bar (Now a standard fixed HTML element outside the canvas)
-export function TopBar() {
-  const [time, setTime] = React.useState("");
-  const activeCount = FAKE_NODES.filter((n) => n.state === "active").length;
-  const conqueredCount = FAKE_NODES.filter((n) => n.state === "conquered").length;
-
-  React.useEffect(() => {
-    const updateTime = () => setTime(new Date().toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        height: "48px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 24px",
-        background: "rgba(5, 8, 16, 0.95)",
-        borderBottom: "1px solid rgba(77, 216, 232, 0.2)",
-        backdropFilter: "blur(8px)",
-        fontFamily: "var(--wm-font-mono)",
-        fontSize: "0.65rem",
-        color: "#4DD8E8",
-        zIndex: 50,
-        pointerEvents: "auto",
-      }}
-    >
-      <div style={{
-        fontFamily: "var(--wm-font-display)",
-        fontSize: "0.75rem",
-        fontWeight: 700,
-        letterSpacing: "0.15em",
-        textTransform: "uppercase",
-        color: "#4DD8E8",
-        textShadow: "0 0 8px #4DD8E8",
-      }}>
-        CAMPAIGN VISUALIZER — 3D TACTICAL DISPLAY
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ opacity: 0.6 }}>TIME</span>
-          <span style={{ fontFamily: "var(--wm-font-mono)", fontWeight: 600, letterSpacing: "0.1em" }}>{time}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", borderLeft: "1px solid rgba(77, 216, 232, 0.2)", paddingLeft: "16px" }}>
-          <span style={{ opacity: 0.6 }}>ACTIVE FRONTS</span>
-          <span style={{ fontFamily: "var(--wm-font-display)", fontWeight: 700, color: "#FFB347", textShadow: "0 0 8px #FFB347" }}>{activeCount}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", borderLeft: "1px solid rgba(77, 216, 232, 0.2)", paddingLeft: "16px" }}>
-          <span style={{ opacity: 0.6 }}>CONQUERED</span>
-          <span style={{ fontFamily: "var(--wm-font-display)", fontWeight: 700, color: "#3FE0A0", textShadow: "0 0 8px #3FE0A0" }}>{conqueredCount}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Bottom Bar - Tactical Readout (Also outside the canvas)
-export function BottomBar() {
-  const [logIndex, setLogIndex] = React.useState(0);
-  const FAKE_LOG_ENTRIES = [
-    { time: "14:22", event: "MILESTONE SECURED", detail: "TACTICAL PHYSICAL — 5K TIME" },
-    { time: "14:18", event: "HYPERLANE ESTABLISHED", detail: "GOAL-2 → GOAL-3 LINK ACTIVE" },
-    { time: "14:15", event: "CONTACT LOST", detail: "REACH CODEFORCES — SIGNAL DEGRADED" },
-    { time: "14:10", event: "SECTOR SCAN COMPLETE", detail: "FOG SECTOR 7 — UNKNOWN SIGNATURES" },
-    { time: "14:05", event: "RESOURCE ALLOCATED", detail: "DEPLOY WAR — +15% MOMENTUM" },
-    { time: "13:58", event: "THREAT DETECTED", detail: "SECTOR 3 — HOSTILE ACTIVITY" },
-    { time: "13:52", event: "LINK ESTABLISHED", detail: "COMMAND ↔ SECURE COMMS" },
-    { time: "13:47", event: "INTEL UPDATE", detail: "MASTER SYSTEMS — TARGET ACQUIRED" },
-  ];
-
-  React.useEffect(() => {
-    const interval = setInterval(() => setLogIndex((prev) => (prev + 1) % FAKE_LOG_ENTRIES.length), 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const visibleLogs = FAKE_LOG_ENTRIES.slice(logIndex, logIndex + 6);
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: "40px",
-        display: "flex",
-        alignItems: "center",
-        padding: "0 24px",
-        background: "rgba(5, 8, 16, 0.95)",
-        borderTop: "1px solid rgba(77, 216, 232, 0.2)",
-        backdropFilter: "blur(8px)",
-        fontFamily: "var(--wm-font-mono)",
-        fontSize: "0.6rem",
-        color: "#4DD8E8",
-        overflow: "hidden",
-        zIndex: 50,
-        pointerEvents: "none",
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 }}>
-        {visibleLogs.map((log, i) => (
-          <div key={i} style={{ display: "flex", gap: "12px", opacity: 1 - i * 0.12, whiteSpace: "nowrap" }}>
-            <span style={{ opacity: 0.5 }}>{log.time}</span>
-            <span style={{ color: "#FFB347", fontWeight: 600 }}>{log.event}</span>
-            <span style={{ opacity: 0.7 }}>{log.detail}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// MAIN CANVAS COMPONENT
-// ============================================================================
-
 function WarMap3DCanvasInner() {
   const { selectedNodeId } = useWarMapStore(useShallow((s) => ({ selectedNodeId: s.selectedNodeId })));
   const nodeMap = React.useMemo(() => new Map(FAKE_NODES.map((n) => [n.id, n])), []);
@@ -1088,10 +790,6 @@ function WarMap3DCanvasInner() {
     </>
   );
 }
-
-// ============================================================================
-// EXPORT
-// ============================================================================
 
 export function WarMap3DCanvas() {
   return (
