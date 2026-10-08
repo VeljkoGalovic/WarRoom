@@ -1085,13 +1085,9 @@ function WarMap3DCanvasInner() {
 
       {/* Camera Controller */}
       <CameraController />
-
-      {/* 3D UI Panel / Overlay */}
-      <DetailPanel />
     </>
   );
 }
-
 
 // ============================================================================
 // EXPORT

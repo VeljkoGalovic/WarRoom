@@ -3,7 +3,7 @@
 import { Rajdhani, JetBrains_Mono } from "next/font/google";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import { TopBar, BottomBar } from "./WarMap3DCanvas";
+import { TopBar, BottomBar, DetailPanel} from "./WarMap3DCanvas";
 // Route-scoped fonts
 const rajdhani = Rajdhani({
   subsets: ["latin"],
@@ -44,15 +44,14 @@ const WarMap3DCanvas = dynamic(() => import("./WarMap3DCanvas").then((mod) => mo
 
 export default function WarMap3DPreviewPage() {
   return (
-    <div className={`${rajdhani.variable} ${jetbrainsMono.variable} relative w-full h-screen overflow-hidden bg-[#050810]`} style={{ minHeight: "100vh" }}>
-      {/* 1. The 3D Canvas contains ONLY 3D elements */}
-      <Suspense fallback={null}>
-        <WarMap3DCanvas />
-      </Suspense>
+    <main style={{ width: "100vw", height: "100vh", position: "relative", background: "#030712", overflow: "hidden" }}>
+      {/* 1. The 3D Canvas contains ONLY Three.js/R3F components */}
+      <WarMap3DCanvas />
 
-      {/* 2. HUD Overlays live OUTSIDE the Canvas as DOM siblings */}
+      {/* 2. All HTML UI overlays sit OUTSIDE the Canvas */}
       <TopBar />
       <BottomBar />
-    </div>
+      <DetailPanel />
+    </main>
   );
 }
