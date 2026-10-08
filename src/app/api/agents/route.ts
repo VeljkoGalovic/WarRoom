@@ -18,7 +18,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, rank, role, systemPrompt, modelEndpoint, avatarIcon } = body;
+    const { name, rank, role, systemPrompt, modelEndpoint, avatarIcon, identity, operationalPrompt } = body;
 
     // For demo purposes, use the first user
     const user = await prisma.user.findFirst();
@@ -34,6 +34,8 @@ export async function POST(request: Request) {
         systemPrompt,
         modelEndpoint,
         avatarIcon,
+        identity,
+        operationalPrompt,
         userId: user.id,
       },
     });

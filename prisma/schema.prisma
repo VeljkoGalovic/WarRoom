@@ -22,6 +22,7 @@ model User {
   goals         Goal[]
   agents        Agent[]
   activityLogs  ActivityLog[]
+  memories      Memory[]
 }
 
 model Goal {
@@ -64,15 +65,19 @@ model Agent {
   name          String
   rank          String   // GENERAL, CAPTAIN, SPECIALIST, LIEUTENANT, SERGEANT
   role          String   @db.Text
-  systemPrompt  String   @db.Text
-  modelEndpoint String
-  avatarIcon    String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  goals         Goal[]
+  // Persona fields (split from operational prompt)
+  identity         String?  @db.Text       // Stable "who am I" - backfilled from systemPrompt
+  operationalPrompt String?  @db.Text       // Default task framing
+  systemPrompt     String   @db.Text       // Legacy field - kept for backward compat, will be deprecated
+  modelEndpoint    String
+  avatarIcon       String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goals            Goal[]
+  memories         Memory[]
 
   @@index([userId])
 }
@@ -89,6 +94,22 @@ model ActivityLog {
   @@index([userId])
   @@index([timestamp])
   @@index([category])
+}
+
+model Memory {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  embedding Unsupported("vector(3072)")
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([agentId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 enum GoalStatus {
