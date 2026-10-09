@@ -59,14 +59,30 @@ export default function WarMap3DPreviewPage() {
       }}
       className={`${rajdhani.variable} ${jetbrainsMono.variable}`}
     >
-      {/* 1. The 3D Canvas contains ONLY Three.js/R3F components */}
+      {/* Layer 0: Full-screen R3F Canvas */}
       <WarMap3DCanvas />
 
-      {/* 2. All HTML UI overlays sit OUTSIDE the Canvas */}
-      <TopHUD />
-      <StaffRosterPanel />
-      <OperationsAARPanel />
-      <BottomBar />
+      {/* Layer 10: Pointer-events-none container for UI panels */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 10,
+        }}
+      >
+        {/* Top Command HUD - Layer 20 */}
+        <TopHUD />
+
+        {/* Left Staff Roster Panel - Layer 20 */}
+        <StaffRosterPanel />
+
+        {/* Right Operations Briefing & AAR Panel - Layer 20 */}
+        <OperationsAARPanel />
+
+        {/* Bottom Ticker Bar - Layer 20 */}
+        <BottomBar />
+      </div>
     </main>
   );
 }
