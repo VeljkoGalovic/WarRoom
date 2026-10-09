@@ -207,7 +207,7 @@ export function WarMap3DCanvas() {
       onCreated={({ gl }) => {
         gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.2;
+        gl.toneMappingExposure = 1.5;
       }}
     >
       <OrbitControls
@@ -224,14 +224,14 @@ export function WarMap3DCanvas() {
       <Suspense fallback={null}>
         <EffectComposer multisampling={8}>
           <Bloom
-            luminanceThreshold={0.8}
-            intensity={0.5}
-            kernelSize={1.5}
+            luminanceThreshold={0.7}
+            intensity={1.0}
+            kernelSize={2.0}
           />
           <Vignette
             eskil={false}
-            offset={0.3}
-            darkness={0.4}
+            offset={0.35}
+            darkness={0.45}
           />
           <WarMap3DCanvasInner />
         </EffectComposer>

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-// FIX: Imported useCursor from @react-three/drei
 import { Text, useCursor } from "@react-three/drei";
 import * as THREE from "three";
 import { useWarMapStore } from "./WarMap3DCanvas";
@@ -139,12 +138,18 @@ const FOG_POSITIONS = [
 ];
 
 // ============================================================================
-// SHARED GEOMETRIES (created once at module level)
+// SHARED GEOMETRIES & MATERIALS (created once at module level)
 // ============================================================================
 
 const sectorRingGeometry = new THREE.RingGeometry(35, 40, 64);
 const sectorInnerRingGeometry = new THREE.RingGeometry(25, 30, 64);
 const sectorCenterGeometry = new THREE.CircleGeometry(8, 32);
+
+// Command Console / Projector Base geometries
+const consoleBaseGeometry = new THREE.BoxGeometry(180, 12, 100);
+const consoleBevelGeometry = new THREE.BoxGeometry(200, 4, 110);
+const consoleCoreSlotGeometry = new THREE.BoxGeometry(60, 8, 60);
+const consoleGlowGeometry = new THREE.PlaneGeometry(50, 50);
 
 // ============================================================================
 // COMPONENTS
@@ -158,7 +163,7 @@ function FloorGrid() {
   useFrame((_, delta) => {
     timeRef.current += delta;
     if (gridRef.current) {
-      gridRef.current.material.opacity = 0.1 + Math.sin(timeRef.current * 0.4) * 0.03;
+      gridRef.current.material.opacity = 0.12 + Math.sin(timeRef.current * 0.4) * 0.04;
     }
   });
 
@@ -171,6 +176,136 @@ function FloorGrid() {
   );
 }
 
+// Holographic Command Console Projector Base
+function CommandConsole() {
+  const timeRef = React.useRef(0);
+  const coreSlotRef = React.useRef<THREE.Mesh | null>(null);
+
+  const baseMaterial = React.useMemo(() => new THREE.MeshStandardMaterial({
+    color: 0x0a0f1a,
+    metalness: 0.85,
+    roughness: 0.15,
+    transparent: true,
+    opacity: 0.95,
+  }), []);
+
+  const bevelMaterial = React.useMemo(() => new THREE.MeshStandardMaterial({
+    color: 0x101828,
+    metalness: 0.9,
+    roughness: 0.1,
+    transparent: true,
+    opacity: 0.9,
+  }), []);
+
+  const coreSlotMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: COLORS.holoCyan,
+    transparent: true,
+    opacity: 0.6,
+    side: THREE.DoubleSide,
+  }), []);
+
+  const coreGlowMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: COLORS.holoCyan,
+    transparent: true,
+    opacity: 0.4,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  }), []);
+
+  const accentLineMaterial = React.useMemo(() => new THREE.LineBasicMaterial({
+    color: COLORS.holoCyan,
+    transparent: true,
+    opacity: 0.5,
+    linewidth: 2,
+  }), []);
+
+  // ✅ Memoized line object (fixes the <line> geometry JSX error)
+  const accentLineObject = React.useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    const positions = new Float32Array([
+      -85, 2, -45,  85, 2, -45,
+      -85, 2,  45,  85, 2,  45,
+      -85, 2, -45, -85, 2,  45,
+       85, 2, -45,  85, 2,  45,
+    ]);
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    return new THREE.LineSegments(geom, accentLineMaterial);
+  }, [accentLineMaterial]);
+
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+    if (coreSlotRef.current) {
+      coreSlotRef.current.scale.y = 1 + Math.sin(timeRef.current * 2) * 0.15;
+      // ✅ Cast to MeshBasicMaterial to fix the opacity type error
+      const mat = coreSlotRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.5 + Math.sin(timeRef.current * 3) * 0.15;
+    }
+  });
+
+  return (
+    <group position={[0, -70, 120] as [number, number, number]}>
+      {/* Main console base - low-profile sci-fi hardware */}
+      <mesh geometry={consoleBaseGeometry} material={baseMaterial} position={[0, 6, 0] as [number, number, number]} />
+
+      {/* Top bevel/trim */}
+      <mesh geometry={consoleBevelGeometry} material={bevelMaterial} position={[0, 12, 0] as [number, number, number]} />
+
+      {/* Core slot - glowing aperture where hologram projects from */}
+      <mesh
+        ref={coreSlotRef}
+        geometry={consoleCoreSlotGeometry}
+        material={coreSlotMaterial}
+        position={[0, 16, 0] as [number, number, number]}
+      />
+
+      {/* Pulsing core glow above slot */}
+      <mesh
+        geometry={consoleGlowGeometry}
+        material={coreGlowMaterial}
+        position={[0, 22, 0] as [number, number, number]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        scale={1 + Math.sin(timeRef.current * 2.5) * 0.3}
+      />
+
+      {/* Accent lines on console face */}
+      <primitive object={accentLineObject} position={[0, 12, 0]} />
+
+      {/* Side panel details */}
+      <mesh
+        geometry={React.useMemo(() => new THREE.BoxGeometry(12, 20, 80), [])}
+        material={baseMaterial}
+        position={[-96, 22, 0] as [number, number, number]}
+      />
+      <mesh
+        geometry={React.useMemo(() => new THREE.BoxGeometry(12, 20, 80), [])}
+        material={baseMaterial}
+        position={[96, 22, 0] as [number, number, number]}
+      />
+
+      {/* Holographic emitter strips on sides */}
+      <mesh
+        geometry={React.useMemo(() => new THREE.BoxGeometry(8, 16, 60), [])}
+        material={React.useMemo(() => new THREE.MeshBasicMaterial({
+          color: COLORS.holoCyan,
+          transparent: true,
+          opacity: 0.3,
+          side: THREE.DoubleSide,
+        }), [])}
+        position={[-96, 22, 0] as [number, number, number]}
+      />
+      <mesh
+        geometry={React.useMemo(() => new THREE.BoxGeometry(8, 16, 60), [])}
+        material={React.useMemo(() => new THREE.MeshBasicMaterial({
+          color: COLORS.holoCyan,
+          transparent: true,
+          opacity: 0.3,
+          side: THREE.DoubleSide,
+        }), [])}
+        position={[96, 22, 0] as [number, number, number]}
+      />
+    </group>
+  );
+}
 // Command Core - striking geometric nexus at center
 function CommandCore() {
   const timeRef = React.useRef(0);
@@ -184,29 +319,40 @@ function CommandCore() {
   const outerMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: COLORS.holoCyan,
     transparent: true,
-    opacity: 0.3,
+    opacity: 0.45,
     side: THREE.DoubleSide,
+    depthWrite: false,
   }), []);
 
   const middleMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: COLORS.conquestGreen,
     transparent: true,
-    opacity: 0.5,
+    opacity: 0.65,
     side: THREE.DoubleSide,
+    depthWrite: false,
   }), []);
 
   const innerMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: COLORS.progressAmber,
     transparent: true,
-    opacity: 0.6,
+    opacity: 0.75,
     side: THREE.DoubleSide,
+    depthWrite: false,
   }), []);
 
   const coreMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: 0xffffff,
     transparent: true,
-    opacity: 0.9,
+    opacity: 1.0,
     wireframe: true,
+  }), []);
+
+  const centerGlowMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: COLORS.holoCyan,
+    transparent: true,
+    opacity: 0.9,
+    side: THREE.DoubleSide,
+    depthWrite: false,
   }), []);
 
   useFrame((_, delta) => {
@@ -220,24 +366,19 @@ function CommandCore() {
 
   return (
     <group ref={groupRef} position={[0, 2, 0] as [number, number, number]}>
-      {/* Outer rotating rings */}
+      {/* Outer rotating rings - boosted opacity for bloom */}
       <mesh geometry={outerRingGeometry} material={outerMaterial} rotation={[-Math.PI / 2, 0, 0]} />
       <mesh geometry={middleRingGeometry} material={middleMaterial} rotation={[-Math.PI / 2, 0, 0]} />
       <mesh geometry={innerRingGeometry} material={innerMaterial} rotation={[-Math.PI / 2, 0, 0]} />
-      {/* Core geometric shape */}
+      {/* Core geometric shape - brighter wireframe */}
       <mesh geometry={coreGeometry} material={coreMaterial} position={[0, 0, 0] as [number, number, number]} />
-      {/* Pulsing center glow */}
+      {/* Pulsing center glow - stronger for bloom */}
       <mesh
         geometry={React.useMemo(() => new THREE.CircleGeometry(2.5, 32), [])}
-        material={React.useMemo(() => new THREE.MeshBasicMaterial({
-          color: COLORS.holoCyan,
-          transparent: true,
-          opacity: 0.8,
-          side: THREE.DoubleSide,
-        }), [])}
+        material={centerGlowMaterial}
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0.1, 0] as [number, number, number]}
-        scale={1 + Math.sin(timeRef.current * 2) * 0.15}
+        scale={1 + Math.sin(timeRef.current * 2) * 0.2}
       />
       {/* Label */}
       <Text
@@ -246,7 +387,7 @@ function CommandCore() {
         color="#4DD8E8"
         anchorX="center"
         anchorY="middle"
-        fillOpacity={0.9}
+        fillOpacity={0.95}
       >
         COMMAND NEXUS
       </Text>
@@ -257,7 +398,7 @@ function CommandCore() {
 // Sector Hub - flat glowing ring on floor with pulsing beacon
 function SectorHub({ sector }: { sector: typeof SECTOR_HUBS[0] }) {
   const timeRef = React.useRef(0);
-
+  const selectedNodeId = useWarMapStore((s) => s.selectedNodeId);
   const nodesInSector = FAKE_NODES.filter(n => n.sectorId === sector.id && n.id !== "command");
   const hasActive = nodesInSector.some(n => n.state === "active");
   const hasAtRisk = nodesInSector.some(n => n.state === "at-risk");
@@ -268,21 +409,31 @@ function SectorHub({ sector }: { sector: typeof SECTOR_HUBS[0] }) {
   const outerRingMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: ringColor,
     transparent: true,
-    opacity: 0.25,
+    opacity: 0.35,
     side: THREE.DoubleSide,
+    depthWrite: false,
   }), [ringColor]);
 
   const innerRingMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: ringColor,
     transparent: true,
-    opacity: 0.15,
+    opacity: 0.25,
     side: THREE.DoubleSide,
+    depthWrite: false,
   }), [ringColor]);
 
   const beaconMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: ringColor,
     transparent: true,
-    opacity: 0.9,
+    opacity: 0.95,
+    depthWrite: false,
+  }), [ringColor]);
+
+  const labelMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: ringColor,
+    transparent: true,
+    opacity: 0.6,
+    side: THREE.DoubleSide,
   }), [ringColor]);
 
   useFrame((_, delta) => {
@@ -291,27 +442,27 @@ function SectorHub({ sector }: { sector: typeof SECTOR_HUBS[0] }) {
 
   return (
     <group position={sector.position}>
-      {/* Outer sector ring */}
+      {/* Outer sector ring - boosted opacity for bloom */}
       <mesh
         geometry={sectorRingGeometry}
         material={outerRingMaterial}
         rotation={[-Math.PI / 2, 0, 0]}
-        scale={1 + Math.sin(timeRef.current * 1.5) * 0.05}
+        scale={1 + Math.sin(timeRef.current * 1.5) * 0.08}
       />
       {/* Inner sector ring */}
       <mesh
         geometry={sectorInnerRingGeometry}
         material={innerRingMaterial}
         rotation={[-Math.PI / 2, 0, 0]}
-        scale={1 + Math.sin(timeRef.current * 1.5 + 1) * 0.03}
+        scale={1 + Math.sin(timeRef.current * 1.5 + 1) * 0.05}
       />
-      {/* Center beacon */}
+      {/* Center beacon - brighter */}
       <mesh
         geometry={sectorCenterGeometry}
         material={beaconMaterial}
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0.5, 0] as [number, number, number]}
-        scale={1 + Math.sin(timeRef.current * 3) * 0.2}
+        scale={1 + Math.sin(timeRef.current * 3) * 0.25}
       />
       {/* Sector label */}
       <Text
@@ -320,7 +471,7 @@ function SectorHub({ sector }: { sector: typeof SECTOR_HUBS[0] }) {
         color={`#${ringColor.toString(16).padStart(6, '0')}`}
         anchorX="center"
         anchorY="middle"
-        fillOpacity={0.7}
+        fillOpacity={0.8}
       >
         {sector.name}
       </Text>
@@ -328,90 +479,169 @@ function SectorHub({ sector }: { sector: typeof SECTOR_HUBS[0] }) {
   );
 }
 
-// Fog Volume - unknown sectors
+// Fog Volume - jagged low-poly anomalies (enhanced)
 function FogVolume({ fog }: { fog: typeof FOG_POSITIONS[0] }) {
   const timeRef = React.useRef(0);
   const meshRef = React.useRef<THREE.Mesh | null>(null);
+  const wireRef = React.useRef<THREE.LineSegments | null>(null);
 
-  const fogGeometry = React.useMemo(() => new THREE.IcosahedronGeometry(1, 4), []);
+  // Create irregular, jagged geometry using displaced Icosahedron
+  const { anomalyGeometry, wireGeometry } = React.useMemo(() => {
+    const baseGeom = new THREE.IcosahedronGeometry(1, 4);
+    const positions = baseGeom.attributes.position;
+    const anomalyPositions = new Float32Array(positions.count * 3);
 
-  const wireframeMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
-    color: COLORS.holoCyan,
-    wireframe: true,
+    // Displace vertices for jagged, ominous shape
+    for (let i = 0; i < positions.count; i++) {
+      const x = positions.getX(i);
+      const y = positions.getY(i);
+      const z = positions.getZ(i);
+
+      // Add noise-based displacement
+      const noise = Math.sin(x * 2.5) * Math.cos(y * 2.5) * Math.sin(z * 2.5) * 0.35;
+      const scale = 1 + noise + Math.random() * 0.15;
+
+      anomalyPositions[i * 3] = x * scale;
+      anomalyPositions[i * 3 + 1] = y * scale;
+      anomalyPositions[i * 3 + 2] = z * scale;
+    }
+
+    const anomalyGeom = new THREE.BufferGeometry();
+    anomalyGeom.setAttribute('position', new THREE.BufferAttribute(anomalyPositions, 3));
+    anomalyGeom.setIndex(baseGeom.index);
+    anomalyGeom.computeVertexNormals();
+
+    // Wireframe geometry from edges
+    const edges = new THREE.EdgesGeometry(anomalyGeom);
+
+    return { anomalyGeometry: anomalyGeom, wireGeometry: edges };
+  }, []);
+
+  // Dark near-black fill material
+  const fillMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: 0x020408,
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.85,
     side: THREE.BackSide,
+    depthWrite: false,
   }), []);
 
-  const innerMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+  // Faint cyan/amber wireframe outline
+  const wireframeMaterial = React.useMemo(() => new THREE.LineBasicMaterial({
     color: COLORS.holoCyan,
     transparent: true,
-    opacity: 0.08,
-    side: THREE.BackSide,
+    opacity: 0.25,
+    linewidth: 1,
+  }), []);
+
+  // Accent wireframe (amber for variation)
+  const accentWireMaterial = React.useMemo(() => new THREE.LineBasicMaterial({
+    color: COLORS.progressAmber,
+    transparent: true,
+    opacity: 0.15,
+    linewidth: 1,
   }), []);
 
   useFrame((_, delta) => {
     timeRef.current += delta;
     if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.02;
-      meshRef.current.rotation.x += delta * 0.01;
-      const pulse = 1 + Math.sin(timeRef.current * 0.5) * 0.1;
+      meshRef.current.rotation.y += delta * 0.015;
+      meshRef.current.rotation.x += delta * 0.008;
+      const pulse = 1 + Math.sin(timeRef.current * 0.4) * 0.05;
       meshRef.current.scale.setScalar(pulse);
+    }
+    if (wireRef.current) {
+      wireRef.current.rotation.y += delta * 0.015;
+      wireRef.current.rotation.x += delta * 0.008;
+      const pulse = 1 + Math.sin(timeRef.current * 0.4) * 0.05;
+      wireRef.current.scale.setScalar(pulse);
     }
   });
 
   return (
     <group position={fog.position}>
+      {/* Dark fill volume */}
       <mesh
         ref={meshRef}
-        geometry={fogGeometry}
+        geometry={anomalyGeometry}
+        material={fillMaterial}
+        scale={fog.radius}
+      />
+      {/* Primary wireframe outline */}
+      <lineSegments
+        ref={wireRef}
+        geometry={wireGeometry}
         material={wireframeMaterial}
         scale={fog.radius}
       />
-      <mesh
-        geometry={fogGeometry}
-        material={innerMaterial}
-        scale={fog.radius * 0.95}
+      {/* Secondary accent wireframe */}
+      <lineSegments
+        geometry={wireGeometry}
+        material={accentWireMaterial}
+        scale={fog.radius * 1.02}
       />
+      {/* Warning label */}
       <Text
         position={[0, fog.radius + 10, 0] as [number, number, number]}
         fontSize={3.2}
         color="#4DD8E8"
         anchorX="center"
         anchorY="middle"
-        fillOpacity={0.6}
+        fillOpacity={0.7}
       >
         {fog.name}
       </Text>
+      {/* Pulsing caution symbol */}
       <Text
-        position={[0, fog.radius + 20, 0] as [number, number, number]}
-        fontSize={5}
-        color="#4DD8E8"
+        position={[0, fog.radius + 22, 0] as [number, number, number]}
+        fontSize={6}
+        color="#FFB347"
         anchorX="center"
         anchorY="middle"
-        fillOpacity={0.3}
+        fillOpacity={0.5 + Math.sin(timeRef.current * 2.5) * 0.4}
       >
-        ?
+        ⚠
+      </Text>
+      {/* Redacted tag */}
+      <Text
+        position={[0, fog.radius + 32, 0] as [number, number, number]}
+        fontSize={2.2}
+        color="#FF4D5E"
+        anchorX="center"
+        anchorY="middle"
+        fillOpacity={0.6}
+      >
+        [REDACTED]
       </Text>
     </group>
   );
 }
 
-// Hyperlane - low-profile straight or gently curved lines at ground level
+// Hyperlane - low-profile lines with enhanced glow
 function Hyperlane({ from, to, color, isActive }: { from: [number, number, number]; to: [number, number, number]; color: number; isActive: boolean }) {
   const timeRef = React.useRef(0);
 
   const lineMaterial = React.useMemo(() => new THREE.LineBasicMaterial({
     color,
     transparent: true,
-    opacity: isActive ? 0.7 : 0.3,
+    opacity: isActive ? 0.85 : 0.45,
+    linewidth: isActive ? 3 : 2,
   }), [color, isActive]);
 
   const flowMaterial = React.useMemo(() => new THREE.LineBasicMaterial({
     color: 0xffffff,
     transparent: true,
-    opacity: isActive ? 0.9 : 0,
+    opacity: isActive ? 1.0 : 0,
+    linewidth: 2,
   }), [isActive]);
+
+  // Glow line for bloom effect
+  const glowMaterial = React.useMemo(() => new THREE.LineBasicMaterial({
+    color,
+    transparent: true,
+    opacity: isActive ? 0.6 : 0.2,
+    linewidth: isActive ? 8 : 4,
+  }), [color, isActive]);
 
   const { lineGeometry, flowGeometry } = React.useMemo(() => {
     const midX = (from[0] + to[0]) / 2;
@@ -433,9 +663,9 @@ function Hyperlane({ from, to, color, isActive }: { from: [number, number, numbe
     return { lineGeometry: lineGeom, flowGeometry: flowGeom };
   }, [from, to]);
 
-  // FIX: Wrapped THREE.Line in <primitive> to avoid SVG <line> type collisions in TypeScript
   const lineObj = React.useMemo(() => new THREE.Line(lineGeometry, lineMaterial), [lineGeometry, lineMaterial]);
   const flowObj = React.useMemo(() => new THREE.Line(flowGeometry, flowMaterial), [flowGeometry, flowMaterial]);
+  const glowObj = React.useMemo(() => new THREE.Line(lineGeometry, glowMaterial), [lineGeometry, glowMaterial]);
 
   useFrame((_, delta) => {
     timeRef.current += delta;
@@ -443,7 +673,11 @@ function Hyperlane({ from, to, color, isActive }: { from: [number, number, numbe
 
   return (
     <group>
+      {/* Glow layer for bloom */}
+      <primitive object={glowObj} position={[0, 0.05, 0] as [number, number, number]} />
+      {/* Main connection line */}
       <primitive object={lineObj} />
+      {/* Animated flow indicator */}
       {isActive && (
         <primitive
           object={flowObj}
@@ -454,19 +688,20 @@ function Hyperlane({ from, to, color, isActive }: { from: [number, number, numbe
   );
 }
 
-// Goal Node - clean floating geometric marker
+// Goal Node - clean floating geometric marker with orbiting milestones
 const GoalNode = React.memo(function GoalNode({ node }: { node: WarMapNode }) {
-  const selectedNodeId = useWarMapStore((s) => s.selectedNodeId);
-  const hoveredNodeId = useWarMapStore((s) => s.hoveredNodeId);
-  const setHoveredNode = useWarMapStore((s) => s.setHoveredNode);
-  const setSelectedNode = useWarMapStore((s) => s.setSelectedNode);
+  const { selectedNodeId, hoveredNodeId, setHoveredNode, setSelectedNode } = useWarMapStore(
+    (s) => ({
+      selectedNodeId: s.selectedNodeId,
+      hoveredNodeId: s.hoveredNodeId,
+      setHoveredNode: s.setHoveredNode,
+      setSelectedNode: s.setSelectedNode,
+    })
+  );
 
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoveredNodeId === node.id;
   const isInteractive = isSelected || isHovered;
-
-  // FIX: Use useCursor hook from drei instead of invalid style prop on <group>
-  useCursor(isInteractive);
 
   const stateColors: Record<NodeState, number> = {
     command: COLORS.holoCyan,
@@ -479,32 +714,39 @@ const GoalNode = React.memo(function GoalNode({ node }: { node: WarMapNode }) {
   const baseColor = stateColors[node.state] || COLORS.holoCyan;
 
   const nodeGeometry = React.useMemo(() => new THREE.OctahedronGeometry(4, 0), []);
-  const ringGeometry = React.useMemo(() => new THREE.RingGeometry(6, 7.5, 32), []);
+  const baseRingGeometry = React.useMemo(() => new THREE.RingGeometry(6, 7.5, 32), []);
+  const progressRingGeometry = React.useMemo(() => new THREE.RingGeometry(8, 9.5, 64), []);
 
   const nodeMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: baseColor,
     transparent: true,
-    opacity: 0.9,
+    opacity: isInteractive ? 1.0 : 0.95,
     wireframe: true,
-  }), [baseColor]);
-
-  const ringMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
-    color: baseColor,
-    transparent: true,
-    opacity: isInteractive ? 0.6 : 0.3,
-    side: THREE.DoubleSide,
   }), [baseColor, isInteractive]);
 
-  const progressRingGeometry = React.useMemo(() => new THREE.RingGeometry(7.5, 8.5, 64), []);
+  const baseRingMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: baseColor,
+    transparent: true,
+    opacity: isInteractive ? 0.7 : 0.4,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  }), [baseColor, isInteractive]);
 
+  // Progress ring material - bright for bloom
   const progressMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: baseColor,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.95,
     side: THREE.DoubleSide,
+    depthWrite: false,
   }), [baseColor]);
 
   const timeRef = React.useRef(0);
+
+  // Get milestones for this node
+  const nodeMilestones = MILESTONES.filter(m => m.nodeId === node.id);
+  const completedCount = nodeMilestones.filter(m => m.completed).length;
+  const totalCount = nodeMilestones.length;
 
   useFrame((_, delta) => {
     timeRef.current += delta;
@@ -516,41 +758,101 @@ const GoalNode = React.memo(function GoalNode({ node }: { node: WarMapNode }) {
 
   return (
     <group
-      position={node.position}
-      onPointerOver={handlePointerOver}
-      onPointerOut={handlePointerOut}
-      onClick={handleClick}
+    position={node.position}
+    onPointerOver={handlePointerOver}
+    onPointerOut={handlePointerOut}
+    onClick={handleClick}
     >
+      {/* Floating geometric marker - rotates gently */}
       <mesh
         geometry={nodeGeometry}
         material={nodeMaterial}
         position={[0, 6, 0] as [number, number, number]}
-        rotation={[timeRef.current * 0.3, timeRef.current * 0.2, 0] as [number, number, number]}
-        scale={isInteractive ? 1.3 : 1}
+        rotation={[timeRef.current * 0.25, timeRef.current * 0.18, 0] as [number, number, number]}
+        scale={isInteractive ? 1.35 : 1.0}
       />
+
+      {/* Base ring on floor - brighter */}
       <mesh
-        geometry={ringGeometry}
-        material={ringMaterial}
+        geometry={baseRingGeometry}
+        material={baseRingMaterial}
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0.5, 0] as [number, number, number]}
-        scale={isInteractive ? 1.2 : 1}
+        scale={isInteractive ? 1.25 : 1.0}
       />
+
+      {/* Progress ring - precise arc reflecting percentage */}
       {node.progress > 0 && (
         <mesh
           geometry={progressRingGeometry}
           material={progressMaterial}
           rotation={[-Math.PI / 2, 0, 0]}
           position={[0, 0.6, 0] as [number, number, number]}
-          scale={[1, 1, node.progress / 100] as [number, number, number]}
+          scale={[
+            1,
+            1,
+            Math.max(0.01, node.progress / 100)
+          ] as [number, number, number]}
         />
       )}
+
+      {/* Progress fill ring (background) */}
+      <mesh
+        geometry={React.useMemo(() => new THREE.RingGeometry(8, 9.5, 64), [])}
+        material={React.useMemo(() => new THREE.MeshBasicMaterial({
+          color: 0x050810,
+          transparent: true,
+          opacity: 0.3,
+          side: THREE.DoubleSide,
+        }), [])}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.55, 0] as [number, number, number]}
+      />
+
+      {/* Orbiting Milestone Spheres */}
+      {nodeMilestones.length > 0 && (
+        <group>
+          {nodeMilestones.map((milestone, i) => {
+            const angle = (timeRef.current * 0.5) + (i * (Math.PI * 2 / totalCount));
+            const radius = 12 + Math.sin(timeRef.current * 0.8 + i) * 1.5;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            const y = 6 + Math.sin(timeRef.current * 1.2 + i * 1.5) * 2;
+
+            const isCompleted = milestone.completed;
+            const milestoneColor = isCompleted ? COLORS.conquestGreen : COLORS.holoCyan;
+            const milestoneOpacity = isCompleted ? 0.9 : 0.5;
+            const pulseScale = isCompleted ? 1 + Math.sin(timeRef.current * 3 + i) * 0.2 : 1;
+
+            const sphereGeometry = React.useMemo(() => new THREE.SphereGeometry(1.8, 16, 16), []);
+            const sphereMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+              color: milestoneColor,
+              transparent: true,
+              opacity: milestoneOpacity,
+              depthWrite: false,
+            }), [milestoneColor, milestoneOpacity]);
+
+            return (
+              <mesh
+                key={milestone.id}
+                geometry={sphereGeometry}
+                material={sphereMaterial}
+                position={[x, y, z] as [number, number, number]}
+                scale={pulseScale}
+              />
+            );
+          })}
+        </group>
+      )}
+
+      {/* Node Label */}
       <Text
         position={[0, 14, 0] as [number, number, number]}
         fontSize={2.8}
         color="#4DD8E8"
         anchorX="center"
         anchorY="middle"
-        fillOpacity={isInteractive ? 1 : 0.7}
+        fillOpacity={isInteractive ? 1 : 0.75}
       >
         {node.name}
       </Text>
@@ -585,26 +887,37 @@ function CameraController() {
 // MAIN INNER COMPONENT
 // ============================================================================
 
+// ✅ Fix this in WarMap3DCanvasInner (line 895)
 export function WarMap3DCanvasInner() {
   const selectedNodeId = useWarMapStore((s) => s.selectedNodeId);
   const nodeMap = React.useMemo(() => new Map(FAKE_NODES.map((n) => [n.id, n])), []);
-
+  
+  // ... rest of component
   return (
     <>
+      {/* Background - Void */}
       <color attach="background" args={[COLORS.void]} />
 
+      {/* Floor Grid */}
       <FloorGrid />
 
+      {/* Holographic Command Console Projector Base */}
+      <CommandConsole />
+
+      {/* Command Core */}
       <CommandCore />
 
+      {/* Sector Hubs - flat rings on floor */}
       {SECTOR_HUBS.map((sector) => (
         <SectorHub key={sector.id} sector={sector} />
       ))}
 
+      {/* Fog Volumes - jagged anomalies */}
       {FOG_POSITIONS.map((fog, i) => (
         <FogVolume key={i} fog={fog} />
       ))}
 
+      {/* Hyperlanes - Command Core to Sector Hubs */}
       {SECTOR_HUBS.map((sector) => (
         <Hyperlane
           key={`core-${sector.id}`}
@@ -615,6 +928,7 @@ export function WarMap3DCanvasInner() {
         />
       ))}
 
+      {/* Hyperlanes - Sector Hubs to Goal Nodes & Node-to-Node */}
       {FAKE_NODES.filter(n => n.id !== "command").map((node) => {
         const nodeConnections = node.connections.filter(c =>
           nodeMap.get(c)?.sectorId === node.sectorId || nodeMap.get(c)?.id === "command"
@@ -643,10 +957,12 @@ export function WarMap3DCanvasInner() {
         });
       })}
 
+      {/* Goal Nodes with orbiting milestones & progress rings */}
       {FAKE_NODES.filter(n => n.id !== "command").map((node) => (
         <GoalNode key={node.id} node={node} />
       ))}
 
+      {/* Camera Controller */}
       <CameraController />
     </>
   );
