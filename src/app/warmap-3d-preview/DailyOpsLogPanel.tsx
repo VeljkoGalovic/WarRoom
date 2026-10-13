@@ -94,7 +94,7 @@ export const DailyOpsLogPanel = React.memo(function DailyOpsLogPanel() {
       <LogHeader count={allLogs.length} />
       <div className={styles.logList}>
         {allLogs.map((log, index) => (
-          <LogEntryItem key={log.id} log={log} index={index} />
+          <LogEntryItem key={`${log.id}-${index}`} log={log} index={index} />
         ))}
       </div>
     </aside>

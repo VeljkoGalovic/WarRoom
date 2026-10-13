@@ -181,7 +181,7 @@ export function WarMap3DCanvas() {
 
   return (
     <Canvas
-      camera={{ position: [0, 25, 45], fov: 60, near: 0.5, far: 1000 }}
+      camera={{ position: [72, 200, 440], fov: 60, near: 0.5, far: 1000 }}
       style={{ width: "100%", height: "100%", position: "fixed", top: 0, left: 0 }}
       onCreated={({ gl }) => {
         gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -201,7 +201,7 @@ export function WarMap3DCanvas() {
         enableRotate={true}
         target={TARGET_CENTER}
         minDistance={10}
-        maxDistance={250}
+        maxDistance={500}
         zoomSpeed={0.8}
         rotateSpeed={0.6}
         panSpeed={0.8}
