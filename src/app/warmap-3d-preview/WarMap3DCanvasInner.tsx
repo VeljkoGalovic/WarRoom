@@ -73,42 +73,588 @@ const nodeSphereGeometry = new THREE.SphereGeometry(28, 64, 64);
 const progressRingGeometry = new THREE.RingGeometry(34, 37, 128);
 const coreGlowGeometry = new THREE.SphereGeometry(32, 32, 32);
 
+// Wireframe/grid overlay geometries for holographic effect
+const wireframeSphereGeometry = new THREE.SphereGeometry(29, 24, 24); // Slightly larger for overlay
+const wireframeEdgesGeometry = new THREE.EdgesGeometry(wireframeSphereGeometry);
+const latitudeLinesGeometry = new THREE.SphereGeometry(28.5, 32, 16); // For latitude rings
+
+// Orbital ring geometries - thinner, multi-layered
+const orbitalRingGeometries = [
+  new THREE.TorusGeometry(36, 0.4, 8, 64),  // Inner ring
+  new THREE.TorusGeometry(40, 0.3, 8, 64),  // Middle ring
+  new THREE.TorusGeometry(44, 0.25, 8, 64), // Outer ring
+];
+
+// Satellite marker geometry
+const satelliteGeometry = new THREE.SphereGeometry(1.2, 16, 16);
+
 // ============================================================================
-// INFINITE GRID - Using Drei's Grid component
+// CENTRAL HOLO-EMITTER BASE & PROJECTOR LIGHTING
 // ============================================================================
 
-function InfiniteGrid() {
+function HoloEmitterBase() {
+  const timeRef = React.useRef(0);
+
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+  });
+
+  // Industrial projector base - stacked hexagonal plates with cylindrical core
   return (
-    <Grid
-      args={[4000, 400]}
-      cellColor="#082028"
-      cellSize={50}
-      cellThickness={0.5}
-      fadeDistance={2000}
-      fadeStrength={0.5}
-      infiniteGrid={true}
-      position={[0, 0, 0]}
-      sectionColor="#0f3844"
-      sectionSize={200}
-      sectionThickness={1}
-      raycast={() => {}}
-    />
+    <group position={[0, 0, 0]} raycast={() => {}}>
+      {/* Base platform - large hexagonal plate */}
+      <mesh
+        geometry={new THREE.CylinderGeometry(22, 24, 3, 6)}
+        position={[0, 1.5, 0]}
+        material={new THREE.MeshStandardMaterial({
+          color: 0x1a1f2e,
+          metalness: 0.9,
+          roughness: 0.2,
+          emissive: 0x0a1a2a,
+          emissiveIntensity: 0.3,
+        })}
+        raycast={() => {}}
+      />
+
+      {/* Middle section - tapered hexagonal core */}
+      <mesh
+        geometry={new THREE.CylinderGeometry(14, 18, 8, 6)}
+        position={[0, 7, 0]}
+        material={new THREE.MeshStandardMaterial({
+          color: 0x121826,
+          metalness: 0.9,
+          roughness: 0.15,
+          emissive: 0x081828,
+          emissiveIntensity: 0.4,
+        })}
+        raycast={() => {}}
+      />
+
+      {/* Upper housing - projector array */}
+      <mesh
+        geometry={new THREE.CylinderGeometry(10, 14, 6, 6)}
+        position={[0, 14, 0]}
+        material={new THREE.MeshStandardMaterial({
+          color: 0x0d1420,
+          metalness: 0.95,
+          roughness: 0.1,
+          emissive: 0x082030,
+          emissiveIntensity: 0.5,
+        })}
+        raycast={() => {}}
+      />
+
+      {/* Emitter lens - glowing aperture at top */}
+      <mesh
+        geometry={new THREE.CylinderGeometry(8, 8, 1, 6)}
+        position={[0, 17.5, 0]}
+        material={new THREE.MeshStandardMaterial({
+          color: 0x083040,
+          metalness: 0.5,
+          roughness: 0.05,
+          emissive: COLORS.holoCyan,
+          emissiveIntensity: 1.2,
+          transparent: true,
+          opacity: 0.8,
+        })}
+        raycast={() => {}}
+      />
+
+      {/* Rotating detail rings on middle section */}
+      <group rotation={[0, timeRef.current * 0.3, 0]}>
+        <mesh
+          geometry={new THREE.TorusGeometry(16, 0.3, 4, 32)}
+          position={[0, 6.5, 0]}
+          material={new THREE.MeshBasicMaterial({
+            color: COLORS.holoCyan,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide,
+          })}
+          raycast={() => {}}
+        />
+        <mesh
+          geometry={new THREE.TorusGeometry(18, 0.2, 4, 32)}
+          position={[0, 7.5, 0]}
+          material={new THREE.MeshBasicMaterial({
+            color: COLORS.progressAmber,
+            transparent: true,
+            opacity: 0.2,
+            side: THREE.DoubleSide,
+          })}
+          raycast={() => {}}
+        />
+      </group>
+
+      {/* Accent strips on upper housing - pulsing glow lines */}
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <mesh
+          key={i}
+          geometry={new THREE.BoxGeometry(0.4, 4, 0.2)}
+          position={[
+            12 * Math.cos((i / 6) * Math.PI * 2),
+            14,
+            12 * Math.sin((i / 6) * Math.PI * 2)
+          ]}
+          material={new THREE.MeshBasicMaterial({
+            color: i % 2 === 0 ? COLORS.holoCyan : COLORS.progressAmber,
+            transparent: true,
+            opacity: 0.4 + Math.sin(timeRef.current * 2 + i) * 0.2,
+          })}
+          raycast={() => {}}
+        />
+      ))}
+    </group>
+  );
+}
+
+// Upward volumetric light beam from emitter
+function EmitterLightBeam() {
+  const timeRef = React.useRef(0);
+
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+  });
+
+  return (
+    <group position={[0, 18, 0]} raycast={() => {}}>
+      {/* Main light cone - semi-transparent cylinder gradient */}
+      <mesh
+        geometry={new THREE.CylinderGeometry(0.5, 18, 80, 8, 1, true)}
+        position={[0, 40, 0]}
+        material={new THREE.MeshBasicMaterial({
+          color: 0x38bdf8,
+          transparent: true,
+          opacity: 0.04,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+        })}
+        raycast={() => {}}
+      />
+
+      {/* Inner tighter beam */}
+      <mesh
+        geometry={new THREE.CylinderGeometry(0.3, 10, 60, 8, 1, true)}
+        position={[0, 30, 0]}
+        material={new THREE.MeshBasicMaterial({
+          color: 0x38bdf8,
+          transparent: true,
+          opacity: 0.06,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+        })}
+        raycast={() => {}}
+      />
+
+      {/* Core beam - brightest center */}
+      <mesh
+        geometry={new THREE.CylinderGeometry(0.2, 4, 40, 8, 1, true)}
+        position={[0, 20, 0]}
+        material={new THREE.MeshBasicMaterial({
+          color: 0x38bdf8,
+          transparent: true,
+          opacity: 0.08,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+        })}
+        raycast={() => {}}
+      />
+
+      {/* Particle sparkles rising in beam */}
+      <points
+        geometry={(() => {
+          const geom = new THREE.BufferGeometry();
+          const count = 150;
+          const positions = new Float32Array(count * 3);
+          const sizes = new Float32Array(count);
+          const colors = new Float32Array(count * 3);
+
+          for (let i = 0; i < count; i++) {
+            const h = Math.random() * 80;
+            const r = (h / 80) * 18 * 0.5;
+            const theta = Math.random() * Math.PI * 2;
+            positions[i * 3] = r * Math.cos(theta);
+            positions[i * 3 + 1] = h;
+            positions[i * 3 + 2] = r * Math.sin(theta);
+            sizes[i] = 0.15 + Math.random() * 0.3;
+            const c = new THREE.Color(0x38bdf8);
+            colors[i * 3] = c.r;
+            colors[i * 3 + 1] = c.g;
+            colors[i * 3 + 2] = c.b;
+          }
+
+          geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+          geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+          geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+          return geom;
+        })()}
+        material={new THREE.PointsMaterial({
+          size: 0.3,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.6,
+          sizeAttenuation: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        })}
+        raycast={() => {}}
+      />
+    </group>
   );
 }
 
 // ============================================================================
-// AMBIENT PARTICLES - Atmospheric depth particles
+// INFINITE GRID - Using Drei's Grid component with Topological Contours & Sector Labels
+// ============================================================================
+
+function InfiniteGrid() {
+  const timeRef = React.useRef(0);
+  const { scene } = useThree();
+
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+  });
+
+  return (
+    <group raycast={() => {}}>
+      {/* Base Infinite Grid from Drei */}
+      <Grid
+        args={[4000, 400]}
+        cellColor="#082028"
+        cellSize={50}
+        cellThickness={0.5}
+        fadeDistance={2000}
+        fadeStrength={0.5}
+        infiniteGrid={true}
+        position={[0, 0.1, 0]}
+        sectionColor="#0f3844"
+        sectionSize={200}
+        sectionThickness={1}
+        raycast={() => {}}
+      />
+
+      {/* Topological Contour Lines - Procedural ring effect via ring meshes */}
+      <group position={[0, 0.15, 0]} raycast={() => {}}>
+        {/* Concentric contour rings with subtle pulsing */}
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => {
+          const baseRadius = 100 + i * 150;
+          const pulseOffset = Math.sin(timeRef.current * 0.5 + i * 0.8) * 8;
+          const radius = baseRadius + pulseOffset;
+          const opacity = Math.max(0.02, 0.12 - i * 0.01 + Math.sin(timeRef.current * 0.3 + i) * 0.03);
+
+          return (
+            <mesh
+              key={`contour-${i}`}
+              geometry={new THREE.RingGeometry(radius - 1, radius + 1, 128)}
+              rotation={[-Math.PI / 2, 0, 0]}
+              material={new THREE.MeshBasicMaterial({
+                color: i % 3 === 0 ? COLORS.holoCyan : (i % 3 === 1 ? COLORS.progressAmber : COLORS.conquestGreen),
+                transparent: true,
+                opacity: opacity,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+              })}
+              raycast={() => {}}
+            />
+          );
+        })}
+
+        {/* Finer contour lines - more frequent, lower opacity */}
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((i) => {
+          const radius = 50 + i * 75;
+          const opacity = 0.04 + Math.sin(timeRef.current * 0.4 + i * 0.5) * 0.02;
+
+          return (
+            <mesh
+              key={`contour-fine-${i}`}
+              geometry={new THREE.RingGeometry(radius - 0.5, radius + 0.5, 64)}
+              rotation={[-Math.PI / 2, 0, 0]}
+              material={new THREE.MeshBasicMaterial({
+                color: 0x4dd8e8,
+                transparent: true,
+                opacity: opacity,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+              })}
+              raycast={() => {}}
+            />
+          );
+        })}
+      </group>
+
+      {/* Sector Ground Labels - HUD text tags on floor grid */}
+      <group position={[0, 0.3, 0]} raycast={() => {}}>
+        {/* DSA SECTOR - near command center */}
+        <Html
+          position={[0, 0, 0]}
+          scaleFactor={12}
+          occlude={false}
+          transform={true}
+          sprite={false}
+          center
+          style={{
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '28px',
+            fontWeight: 600,
+            letterSpacing: '0.3em',
+            textTransform: 'uppercase',
+            color: '#4DD8E8',
+            opacity: 0.15,
+            textShadow: '0 0 20px #4DD8E8',
+            whiteSpace: 'nowrap',
+            transform: 'rotateX(90deg)',
+          }}>
+            DSA SECTOR
+          </div>
+        </Html>
+
+        {/* SECTOR 01 - near tactical physical node */}
+        <Html
+          position={[-100, 0, -80]}
+          scaleFactor={10}
+          occlude={false}
+          transform={true}
+          sprite={false}
+          center
+          style={{
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '24px',
+            fontWeight: 500,
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            color: '#2ECC71',
+            opacity: 0.12,
+            textShadow: '0 0 16px #2ECC71',
+            whiteSpace: 'nowrap',
+            transform: 'rotateX(90deg)',
+          }}>
+            SECTOR 01
+          </div>
+        </Html>
+
+        {/* OPTIMIZATION ZONE - near deploy war node */}
+        <Html
+          position={[80, 0, -60]}
+          scaleFactor={10}
+          occlude={false}
+          transform={true}
+          sprite={false}
+          center
+          style={{
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '22px',
+            fontWeight: 500,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color: '#FFB347',
+            opacity: 0.12,
+            textShadow: '0 0 16px #FFB347',
+            whiteSpace: 'nowrap',
+            transform: 'rotateX(90deg)',
+          }}>
+            OPTIMIZATION ZONE
+          </div>
+        </Html>
+
+        {/* THREAT SECTOR - near reach codeforces node */}
+        <Html
+          position={[-140, 0, 100]}
+          scaleFactor={10}
+          occlude={false}
+          transform={true}
+          sprite={false}
+          center
+          style={{
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '22px',
+            fontWeight: 500,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color: '#FF4D5E',
+            opacity: 0.1,
+            textShadow: '0 0 16px #FF4D5E',
+            whiteSpace: 'nowrap',
+            transform: 'rotateX(90deg)',
+          }}>
+            THREAT SECTOR
+          </div>
+        </Html>
+
+        {/* EXPANSION FRONTIER - far edge */}
+        <Html
+          position={[200, 0, 180]}
+          scaleFactor={10}
+          occlude={false}
+          transform={true}
+          sprite={false}
+          center
+          style={{
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '20px',
+            fontWeight: 400,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: '#8899AA',
+            opacity: 0.08,
+            textShadow: '0 0 12px #8899AA',
+            whiteSpace: 'nowrap',
+            transform: 'rotateX(90deg)',
+          }}>
+            EXPANSION FRONTIER
+          </div>
+        </Html>
+
+        {/* GRID COORDINATE MARKERS - corner markers */}
+        <Html
+          position={[-400, 0, -400]}
+          scaleFactor={8}
+          occlude={false}
+          transform={true}
+          sprite={false}
+          center
+          style={{
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '18px',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: '#4DD8E8',
+            opacity: 0.06,
+            whiteSpace: 'nowrap',
+            transform: 'rotateX(90deg)',
+          }}>
+            [ -400, -400 ]
+          </div>
+        </Html>
+
+        <Html
+          position={[400, 0, -400]}
+          scaleFactor={8}
+          occlude={false}
+          transform={true}
+          sprite={false}
+          center
+          style={{
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '18px',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: '#4DD8E8',
+            opacity: 0.06,
+            whiteSpace: 'nowrap',
+            transform: 'rotateX(90deg)',
+          }}>
+            [ 400, -400 ]
+          </div>
+        </Html>
+
+        <Html
+          position={[-400, 0, 400]}
+          scaleFactor={8}
+          occlude={false}
+          transform={true}
+          sprite={false}
+          center
+          style={{
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '18px',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: '#4DD8E8',
+            opacity: 0.06,
+            whiteSpace: 'nowrap',
+            transform: 'rotateX(90deg)',
+          }}>
+            [ -400, 400 ]
+          </div>
+        </Html>
+
+        <Html
+          position={[400, 0, 400]}
+          scaleFactor={8}
+          occlude={false}
+          transform={true}
+          sprite={false}
+          center
+          style={{
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '18px',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: '#4DD8E8',
+            opacity: 0.06,
+            whiteSpace: 'nowrap',
+            transform: 'rotateX(90deg)',
+          }}>
+            [ 400, 400 ]
+          </div>
+        </Html>
+      </group>
+    </group>
+  );
+}
+
+// ============================================================================
+// AMBIENT PARTICLES - Atmospheric Particle Field & Rising Motes
 // ============================================================================
 
 function AmbientParticles() {
   const particlesRef = React.useRef<THREE.Points | null>(null);
+  const motesRef = React.useRef<THREE.Points | null>(null);
   const timeRef = React.useRef(0);
 
-  const { positions, colors, sizes } = React.useMemo(() => {
-    const count = 400; // Reduced from 800
+  // Main ambient particle field - wide distribution, slow drift
+  const { positions, colors, sizes, velocities } = React.useMemo(() => {
+    const count = 300;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const sizes = new Float32Array(count);
+    const velocities = new Float32Array(count * 3);
 
     const colorOptions = [
       new THREE.Color(COLORS.holoCyan),
@@ -118,23 +664,29 @@ function AmbientParticles() {
     ];
 
     for (let i = 0; i < count; i++) {
-      const radius = 50 + Math.random() * 400;
+      // Spherical distribution around node cluster
+      const radius = 80 + Math.random() * 350;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
 
       positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 180;
       positions[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
 
       const color = colorOptions[Math.floor(Math.random() * colorOptions.length)];
-      colors[i * 3] = color.r * 0.6; // Darker particles
-      colors[i * 3 + 1] = color.g * 0.6;
-      colors[i * 3 + 2] = color.b * 0.6;
+      colors[i * 3] = color.r * 0.4;
+      colors[i * 3 + 1] = color.g * 0.4;
+      colors[i * 3 + 2] = color.b * 0.4;
 
-      sizes[i] = 0.3 + Math.random() * 1.5; // Smaller
+      sizes[i] = 0.2 + Math.random() * 0.8;
+
+      // Slow, gentle drift velocities
+      velocities[i * 3] = (Math.random() - 0.5) * 0.08;
+      velocities[i * 3 + 1] = 0.05 + Math.random() * 0.15; // Upward bias
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.08;
     }
 
-    return { positions, colors, sizes };
+    return { positions, colors, sizes, velocities };
   }, []);
 
   const particleGeometry = React.useMemo(() => {
@@ -142,13 +694,83 @@ function AmbientParticles() {
     geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    // velocity stored in ref, not as geometry attribute (avoids Three.js buffer upload issues)
     return geom;
   }, []);
+
+  // Store velocities in ref for animation (not as geometry attribute)
+  const particleVelocities = React.useRef(velocities);
 
   const particleMaterial = React.useMemo(() => new THREE.PointsMaterial({
     size: 1,
     transparent: true,
-    opacity: 0.25,
+    opacity: 0.35,
+    vertexColors: true,
+    sizeAttenuation: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }), []);
+
+  // Rising Motes - smaller, brighter particles near emitter
+  const { motePositions, moteColors, moteSizes, moteVelocities, motePhases } = React.useMemo(() => {
+    const count = 120;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const velocities = new Float32Array(count * 3);
+    const phases = new Float32Array(count);
+
+    for (let i = 0; i < count; i++) {
+      // Concentrated near emitter, rising upward
+      const radius = Math.random() * 25;
+      const theta = Math.random() * Math.PI * 2;
+      const height = Math.random() * 80;
+
+      positions[i * 3] = radius * Math.cos(theta);
+      positions[i * 3 + 1] = height;
+      positions[i * 3 + 2] = radius * Math.sin(theta);
+
+      // Brighter cyan/amber colors
+      const colorChoice = Math.random();
+      let color: THREE.Color;
+      if (colorChoice < 0.5) color = new THREE.Color(COLORS.holoCyan);
+      else if (colorChoice < 0.8) color = new THREE.Color(COLORS.progressAmber);
+      else color = new THREE.Color(COLORS.conquestGreen);
+
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
+
+      sizes[i] = 0.15 + Math.random() * 0.4;
+
+      // Faster upward velocity with slight swirl
+      velocities[i * 3] = (Math.random() - 0.5) * 0.15;
+      velocities[i * 3 + 1] = 0.3 + Math.random() * 0.4;
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
+
+      phases[i] = Math.random() * Math.PI * 2;
+    }
+
+    return { positions, colors, sizes, velocities, phases };
+  }, []);
+
+  const moteGeometry = React.useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(motePositions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(moteColors, 3));
+    geom.setAttribute('size', new THREE.BufferAttribute(moteSizes, 1));
+    // velocity and phase stored in refs
+    return geom;
+  }, []);
+
+  // Store velocities and phases in refs for animation
+  const moteVelocitiesRef = React.useRef(moteVelocities);
+  const motePhasesRef = React.useRef(motePhases);
+
+  const moteMaterial = React.useMemo(() => new THREE.PointsMaterial({
+    size: 1,
+    transparent: true,
+    opacity: 0.6,
     vertexColors: true,
     sizeAttenuation: true,
     depthWrite: false,
@@ -157,20 +779,73 @@ function AmbientParticles() {
 
   useFrame((_, delta) => {
     timeRef.current += delta;
-    if (particlesRef.current) {
-      const pos = particlesRef.current.geometry.attributes.position.array as Float32Array;
+
+    // Update main ambient particles
+    const posAttr = particlesRef.current?.geometry?.attributes?.position;
+    const velocities = particleVelocities.current;
+    if (posAttr?.array && velocities) {
+      const pos = posAttr.array as Float32Array;
+      const vel = velocities;
       const count = pos.length / 3;
 
       for (let i = 0; i < count; i++) {
-        pos[i * 3 + 1] += delta * 0.3 * (0.5 + Math.sin(timeRef.current + i) * 0.5);
-        if (pos[i * 3 + 1] > 100) pos[i * 3 + 1] = -100;
+        // Apply velocity with subtle turbulence
+        const turbulence = Math.sin(timeRef.current * 0.5 + i * 0.1) * 0.02;
+        pos[i * 3] += vel[i * 3] + turbulence;
+        pos[i * 3 + 1] += vel[i * 3 + 1];
+        pos[i * 3 + 2] += vel[i * 3 + 2] + turbulence;
+
+        // Wrap around when too high
+        if (pos[i * 3 + 1] > 120) {
+          pos[i * 3 + 1] = -80;
+          pos[i * 3] = (Math.random() - 0.5) * 600;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 600;
+        }
       }
       particlesRef.current.geometry.attributes.position.needsUpdate = true;
-      particlesRef.current.rotation.y += delta * 0.005;
+      particlesRef.current.rotation.y += delta * 0.002;
+    }
+
+    // Update rising motes
+    const motePosAttr = motesRef.current?.geometry?.attributes?.position;
+    const moteVelocities = moteVelocitiesRef.current;
+    const motePhases = motePhasesRef.current;
+    if (motePosAttr?.array && moteVelocities && motePhases) {
+      const pos = motePosAttr.array as Float32Array;
+      const vel = moteVelocities;
+      const phase = motePhases;
+      const count = pos.length / 3;
+
+      for (let i = 0; i < count; i++) {
+        // Swirling upward motion
+        const swirlAngle = timeRef.current * 0.8 + phase[i];
+        const swirlRadius = 0.15;
+        pos[i * 3] += vel[i * 3] + Math.cos(swirlAngle) * swirlRadius;
+        pos[i * 3 + 1] += vel[i * 3 + 1];
+        pos[i * 3 + 2] += vel[i * 3 + 2] + Math.sin(swirlAngle) * swirlRadius;
+
+        // Wrap around when reaching top of beam
+        if (pos[i * 3 + 1] > 100) {
+          const radius = Math.random() * 20;
+          const theta = Math.random() * Math.PI * 2;
+          pos[i * 3] = radius * Math.cos(theta);
+          pos[i * 3 + 1] = 5 + Math.random() * 15;
+          pos[i * 3 + 2] = radius * Math.sin(theta);
+        }
+      }
+      motesRef.current.geometry.attributes.position.needsUpdate = true;
     }
   });
 
-  return <points ref={particlesRef} geometry={particleGeometry} material={particleMaterial} raycast={() => {}} />;
+  return (
+    <group raycast={() => {}}>
+      {/* Main ambient particle field */}
+      <points ref={particlesRef} geometry={particleGeometry} material={particleMaterial} raycast={() => {}} />
+
+      {/* Rising motes near emitter */}
+      <points ref={motesRef} geometry={moteGeometry} material={moteMaterial} raycast={() => {}} />
+    </group>
+  );
 }
 
 // ============================================================================
@@ -185,6 +860,7 @@ function Hyperlane({ from, to, color, isActive }: {
 }) {
   const timeRef = React.useRef(0);
   const tubeRef = React.useRef<THREE.Mesh | null>(null);
+  const flowParticlesRef = React.useRef<THREE.Points | null>(null);
 
   const tubeGeometry = React.useMemo(() => {
     const midX = (from[0] + to[0]) / 2;
@@ -202,6 +878,77 @@ function Hyperlane({ from, to, color, isActive }: {
     return geometry;
   }, [from, to]);
 
+  // Flowing energy particles along the tube path
+  const flowGeometry = React.useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    const count = 60;
+    const positions = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const colors = new Float32Array(count * 3);
+    const progress = new Float32Array(count);
+    const phases = new Float32Array(count);
+
+    const curve = new THREE.CubicBezierCurve3(
+      new THREE.Vector3(...from),
+      new THREE.Vector3(from[0], 25, from[2]),
+      new THREE.Vector3(to[0], 25, to[2]),
+      new THREE.Vector3(...to)
+    );
+
+    for (let i = 0; i < count; i++) {
+      const p = i / count;
+      const point = curve.getPoint(p);
+      positions[i * 3] = point.x;
+      positions[i * 3 + 1] = point.y;
+      positions[i * 3 + 2] = point.z;
+      sizes[i] = 0.8 + Math.random() * 1.2;
+      progress[i] = p;
+      phases[i] = Math.random() * Math.PI * 2;
+
+      const c = new THREE.Color(color);
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
+    }
+
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    // progress and phase stored in refs
+    return geom;
+  }, [from, to, color]);
+
+  // Store flow particle progress, size, phase in refs for animation
+  const flowProgressRef = React.useRef(new Float32Array(60));
+  const flowPhasesRef = React.useRef(new Float32Array(60));
+  const flowSizesRef = React.useRef(new Float32Array(60));
+
+  // Initialize refs on first render
+  React.useEffect(() => {
+    const curve = new THREE.CubicBezierCurve3(
+      new THREE.Vector3(...from),
+      new THREE.Vector3(from[0], 25, from[2]),
+      new THREE.Vector3(to[0], 25, to[2]),
+      new THREE.Vector3(...to)
+    );
+    for (let i = 0; i < 60; i++) {
+      const p = i / 60;
+      flowProgressRef.current[i] = p;
+      flowPhasesRef.current[i] = Math.random() * Math.PI * 2;
+      flowSizesRef.current[i] = 0.8 + Math.random() * 1.2;
+    }
+  }, [from, to]);
+
+  const flowMaterial = React.useMemo(() => new THREE.PointsMaterial({
+    size: 1,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.8,
+    sizeAttenuation: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }), []);
+
   const tubeMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color,
     transparent: true,
@@ -213,13 +960,81 @@ function Hyperlane({ from, to, color, isActive }: {
 
   useFrame((_, delta) => {
     timeRef.current += delta;
+
+    // Pulse tube opacity
     if (tubeRef.current) {
       const opacity = isActive ? 0.3 + Math.sin(timeRef.current * 3) * 0.1 : 0.08;
       (tubeRef.current.material as THREE.MeshBasicMaterial).opacity = opacity;
     }
+
+    // Animate flow particles - move along curve from source to target
+    const flowPosAttr = flowParticlesRef.current?.geometry?.attributes?.position;
+    const flowProgress = flowProgressRef.current;
+    const flowPhases = flowPhasesRef.current;
+    const flowSizes = flowSizesRef.current;
+    if (flowPosAttr?.array && flowProgress && flowPhases && flowSizes && isActive) {
+      const positions = flowPosAttr.array as Float32Array;
+      const progressAttr = flowProgress;
+      const sizeAttr = flowSizes;
+      const phaseAttr = flowPhases;
+      const count = positions.length / 3;
+
+      const curve = new THREE.CubicBezierCurve3(
+        new THREE.Vector3(...from),
+        new THREE.Vector3(from[0], 25, from[2]),
+        new THREE.Vector3(to[0], 25, to[2]),
+        new THREE.Vector3(...to)
+      );
+
+      for (let i = 0; i < count; i++) {
+        // Move particle along curve
+        let p = progressAttr[i] + delta * 0.15; // Flow speed
+        if (p > 1) p -= 1; // Loop back to start
+        progressAttr[i] = p;
+
+        const point = curve.getPoint(p);
+        positions[i * 3] = point.x;
+        positions[i * 3 + 1] = point.y;
+        positions[i * 3 + 2] = point.z;
+
+        // Pulse size based on position and phase
+        const pulse = 0.5 + 0.5 * Math.sin(timeRef.current * 8 + phaseAttr[i] + p * Math.PI * 4);
+        sizeAttr[i] = (0.8 + pulse * 1.2) * (1 - Math.abs(p - 0.5) * 0.5); // Brighter in middle
+      }
+
+      flowParticlesRef.current.geometry.attributes.position.needsUpdate = true;
+      flowParticlesRef.current.geometry.attributes.size.needsUpdate = true;
+    }
   });
 
-  return <mesh ref={tubeRef} geometry={tubeGeometry} material={tubeMaterial} raycast={() => {}} />;
+  return (
+    <group raycast={() => {}}>
+      {/* Main tube - the energy beam structure */}
+      <mesh ref={tubeRef} geometry={tubeGeometry} material={tubeMaterial} raycast={() => {}} />
+
+      {/* Flowing energy particles traveling along the tube */}
+      {isActive && (
+        <points ref={flowParticlesRef} geometry={flowGeometry} material={flowMaterial} raycast={() => {}} />
+      )}
+
+      {/* Secondary glow tube - wider, more subtle for volume */}
+      {isActive && (
+        <mesh
+          geometry={tubeGeometry}
+          material={new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity: 0.08 + Math.sin(timeRef.current * 2) * 0.04,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+            side: THREE.DoubleSide,
+          })}
+          scale={[1.8, 1.8, 1]}
+          raycast={() => {}}
+        />
+      )}
+    </group>
+  );
 }
 
 // ============================================================================
@@ -283,6 +1098,63 @@ const TacticalNode = React.memo(function TacticalNode({
     transparent: true,
     opacity: 0.1 * intensityMultiplier,
     side: THREE.BackSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }), [node.color, intensityMultiplier]);
+
+  // Holographic wireframe overlay material
+  const wireframeMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: node.color,
+    transparent: true,
+    opacity: 0.15 * intensityMultiplier,
+    wireframe: true,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }), [node.color, intensityMultiplier]);
+
+  // Latitude lines (holographic grid overlay) material
+  const latitudeLinesMaterial = React.useMemo(() => new THREE.LineBasicMaterial({
+    color: node.color,
+    transparent: true,
+    opacity: 0.1 * intensityMultiplier,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }), [node.color, intensityMultiplier]);
+
+  // Orbital ring materials - thinner, multi-layered
+  const orbitalRingMaterials = React.useMemo(() => [
+    new THREE.MeshBasicMaterial({
+      color: node.color,
+      transparent: true,
+      opacity: 0.3 * intensityMultiplier,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+    new THREE.MeshBasicMaterial({
+      color: node.color,
+      transparent: true,
+      opacity: 0.2 * intensityMultiplier,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+    new THREE.MeshBasicMaterial({
+      color: node.color,
+      transparent: true,
+      opacity: 0.15 * intensityMultiplier,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+  ], [node.color, intensityMultiplier]);
+
+  // Satellite marker material
+  const satelliteMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: node.color,
+    transparent: true,
+    opacity: 0.9 * intensityMultiplier,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   }), [node.color, intensityMultiplier]);
@@ -389,8 +1261,9 @@ const TacticalNode = React.memo(function TacticalNode({
     }
 
     // Animate particles
-    if (particlesRef.current) {
-      const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
+    const nodePosAttr = particlesRef.current?.geometry?.attributes?.position;
+    if (nodePosAttr?.array) {
+      const positions = nodePosAttr.array as Float32Array;
       const { baseRadii, speeds, phases, count } = particlePositions;
 
       for (let i = 0; i < count; i++) {
@@ -444,6 +1317,57 @@ const TacticalNode = React.memo(function TacticalNode({
         material={sphereMaterial}
         raycast={() => {}}
       />
+
+      {/* Holographic wireframe overlay - latitude/longitude grid */}
+      <mesh
+        geometry={wireframeSphereGeometry}
+        material={wireframeMaterial}
+        rotation={[0, timeRef.current * 0.02, 0]}
+        raycast={() => {}}
+      />
+
+      {/* Latitude lines (horizontal rings) - holographic grid overlay */}
+      <group rotation={[0, timeRef.current * -0.01, 0]}>
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <mesh
+            key={`lat-${i}`}
+            geometry={latitudeLinesGeometry}
+            material={latitudeLinesMaterial}
+            scale={[1, (0.3 + i * 0.12), 1]}
+            raycast={() => {}}
+          />
+        ))}
+      </group>
+
+      {/* Multi-layered orbital rings - thinner, elegant tracks */}
+      <group rotation={[Math.PI / 2, 0, 0]}>
+        {orbitalRingGeometries.map((geometry, index) => (
+          <mesh
+            key={`orbital-${index}`}
+            geometry={geometry}
+            material={orbitalRingMaterials[index]}
+            rotation={[0, 0, index * Math.PI / 6]}
+            raycast={() => {}}
+          />
+        ))}
+      </group>
+
+      {/* Satellite markers orbiting on each ring */}
+      <group rotation={[Math.PI / 2, 0, 0]}>
+        {orbitalRingGeometries.map((geometry, ringIndex) => (
+          <mesh
+            key={`satellite-${ringIndex}`}
+            geometry={satelliteGeometry}
+            material={satelliteMaterial}
+            position={[
+              geometry.parameters.radius * Math.cos(timeRef.current * (0.8 + ringIndex * 0.3) + ringIndex),
+              geometry.parameters.radius * Math.sin(timeRef.current * (0.8 + ringIndex * 0.3) + ringIndex),
+              0
+            ] as [number, number, number]}
+            raycast={() => {}}
+          />
+        ))}
+      </group>
 
       {/* Progress ring - shows exact percentage via arc */}
       <mesh
@@ -630,6 +1554,12 @@ export function WarMap3DCanvasInner() {
 
       {/* Fog for atmospheric depth */}
       <fog attach="fog" args={[COLORS.void, 50, 800]} />
+
+      {/* Central Holo-Emitter Base at origin */}
+      <HoloEmitterBase />
+
+      {/* Upward Volumetric Light Beam from emitter */}
+      <EmitterLightBeam />
 
       {/* Infinite Grid - replaces finite floor grid */}
       <InfiniteGrid />
