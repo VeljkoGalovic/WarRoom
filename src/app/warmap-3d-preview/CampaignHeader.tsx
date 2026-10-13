@@ -19,14 +19,21 @@ if (typeof window !== "undefined" && !window.__CAMPAIGN_HEADER_STYLES_INJECTED__
       0% { transform: translateX(-100%); }
       100% { transform: translateX(100%); }
     }
+    @keyframes corner-pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
   `;
   document.head.appendChild(style);
 }
 
-export function CampaignHeader() {
-  const [time, setTime] = React.useState<string>("");
+// Isolated time component - only this re-renders every second
+function TimeDisplay() {
+  const [time, setTime] = React.useState<string>("--:--:--");
+  const [isMounted, setIsMounted] = React.useState(false);
 
   React.useEffect(() => {
+    setIsMounted(true);
     const updateTime = () => {
       setTime(new Date().toLocaleTimeString("en-GB", {
         hour12: false,
@@ -41,6 +48,230 @@ export function CampaignHeader() {
     return () => clearInterval(interval);
   }, []);
 
+  if (!isMounted) {
+    return (
+      <span style={{
+        fontFamily: "var(--wm-font-mono)",
+        fontSize: "0.6rem",
+        letterSpacing: "0.1em",
+        color: "#E2E8F0",
+        fontVariantNumeric: "tabular-nums",
+        opacity: 0.5,
+      }}>--:--:--</span>
+    );
+  }
+
+  return (
+    <span style={{
+      fontFamily: "var(--wm-font-mono)",
+      fontSize: "0.6rem",
+      letterSpacing: "0.1em",
+      color: "#E2E8F0",
+      fontVariantNumeric: "tabular-nums",
+    }}>{time}</span>
+  );
+}
+
+// Memoized static header content
+const HeaderContent = React.memo(function HeaderContent() {
+  return (
+    <>
+      {/* Corner notches - Left */}
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "24px",
+        height: "24px",
+        borderTop: "1px solid rgba(77, 216, 232, 0.4)",
+        borderLeft: "1px solid rgba(77, 216, 232, 0.4)",
+        pointerEvents: "none",
+        animation: "corner-pulse 3s ease-in-out infinite",
+      }} />
+      <div style={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        width: "24px",
+        height: "24px",
+        borderBottom: "1px solid rgba(77, 216, 232, 0.4)",
+        borderLeft: "1px solid rgba(77, 216, 232, 0.4)",
+        pointerEvents: "none",
+        animation: "corner-pulse 3s ease-in-out infinite 0.5s",
+      }} />
+
+      {/* Left: Campaign Title */}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", paddingLeft: "8px" }}>
+        {/* Status indicator */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "#2ECC71",
+            boxShadow: "0 0 8px #2ECC71, 0 0 16px #2ECC71",
+            animation: "pulse-dot 2s ease-in-out infinite",
+          }} />
+          <span style={{
+            fontFamily: "var(--wm-font-display)",
+            fontSize: "0.65rem",
+            fontWeight: 700,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            color: "#2ECC71",
+            textShadow: "0 0 8px #2ECC71",
+          }}>ACTIVE</span>
+        </div>
+
+        {/* Main title */}
+        <div style={{ borderLeft: "1px solid rgba(77, 216, 232, 0.2)", paddingLeft: "16px" }}>
+          <div style={{
+            fontFamily: "var(--wm-font-display)",
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "#E2E8F0",
+            lineHeight: 1.1,
+          }}>
+            CAMPAIGN VISUALIZER
+          </div>
+          <div style={{
+            fontFamily: "var(--wm-font-mono)",
+            fontSize: "0.55rem",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "#4DD8E8",
+            marginTop: "2px",
+            opacity: 0.8,
+          }}>3D TACTICAL DISPLAY</div>
+        </div>
+      </div>
+
+      {/* Center: System Status */}
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "24px" }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "6px 14px",
+          background: "rgba(77, 216, 232, 0.08)",
+          border: "1px solid rgba(77, 216, 232, 0.2)",
+          borderRadius: "4px",
+          fontFamily: "var(--wm-font-mono)",
+          fontSize: "0.6rem",
+          letterSpacing: "0.1em",
+        }}>
+          <span style={{ color: "#4DD8E8" }}>SYSTEM</span>
+          <span style={{ color: "#2ECC71" }}>● NOMINAL</span>
+        </div>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "6px 14px",
+          background: "rgba(77, 216, 232, 0.08)",
+          border: "1px solid rgba(77, 216, 232, 0.2)",
+          borderRadius: "4px",
+          fontFamily: "var(--wm-font-mono)",
+          fontSize: "0.6rem",
+          letterSpacing: "0.1em",
+        }}>
+          <span style={{ color: "#4DD8E8" }}>SECURE</span>
+          <span style={{ color: "#2ECC71" }}>● ENCRYPTED</span>
+        </div>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "6px 14px",
+          background: "rgba(77, 216, 232, 0.08)",
+          border: "1px solid rgba(77, 216, 232, 0.2)",
+          borderRadius: "4px",
+          fontFamily: "var(--wm-font-mono)",
+          fontSize: "0.6rem",
+          letterSpacing: "0.1em",
+        }}>
+          <span style={{ color: "#4DD8E8" }}>UTC</span>
+          <TimeDisplay />
+        </div>
+      </div>
+
+      {/* Right: Connection / Version */}
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "16px", paddingRight: "8px" }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "6px 12px",
+          background: "rgba(77, 216, 232, 0.06)",
+          border: "1px solid rgba(77, 216, 232, 0.15)",
+          borderRadius: "4px",
+        }}>
+          <div style={{
+            width: "6px",
+            height: "6px",
+            borderRadius: "50%",
+            background: "#4DD8E8",
+            boxShadow: "0 0 6px #4DD8E8",
+            animation: "pulse-dot 1.5s ease-in-out infinite",
+          }} />
+          <span style={{
+            fontFamily: "var(--wm-font-mono)",
+            fontSize: "0.55rem",
+            letterSpacing: "0.05em",
+            color: "#4DD8E8",
+          }}>LINK ESTABLISHED</span>
+        </div>
+        <div style={{
+          fontFamily: "var(--wm-font-mono)",
+          fontSize: "0.55rem",
+          letterSpacing: "0.1em",
+          color: "rgba(77, 216, 232, 0.5)",
+        }}>v2.4.1</div>
+      </div>
+
+      {/* Corner notches - Right */}
+      <div style={{
+        position: "absolute",
+        top: 0,
+        right: 0,
+        width: "24px",
+        height: "24px",
+        borderTop: "1px solid rgba(77, 216, 232, 0.4)",
+        borderRight: "1px solid rgba(77, 216, 232, 0.4)",
+        pointerEvents: "none",
+        animation: "corner-pulse 3s ease-in-out infinite 0.25s",
+      }} />
+      <div style={{
+        position: "absolute",
+        bottom: 0,
+        right: 0,
+        width: "24px",
+        height: "24px",
+        borderBottom: "1px solid rgba(77, 216, 232, 0.4)",
+        borderRight: "1px solid rgba(77, 216, 232, 0.4)",
+        pointerEvents: "none",
+        animation: "corner-pulse 3s ease-in-out infinite 0.75s",
+      }} />
+
+      {/* Top scan line */}
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: "1px",
+        background: "linear-gradient(90deg, transparent, rgba(77, 216, 232, 0.6), transparent)",
+        animation: "scan-line 4s linear infinite",
+        pointerEvents: "none",
+      }} />
+    </>
+  );
+});
+
+// Memoized header - only re-renders if props change (none currently)
+export const CampaignHeader = React.memo(function CampaignHeader() {
   return (
     <header
       style={{
@@ -48,117 +279,28 @@ export function CampaignHeader() {
         top: 0,
         left: 0,
         right: 0,
-        height: "60px",
+        height: "56px",
         zIndex: 30,
         pointerEvents: "auto",
         display: "grid",
         gridTemplateColumns: "300px 1fr 380px",
         alignItems: "center",
-        padding: "0 24px",
-        background: "rgba(5, 8, 16, 0.95)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(77, 216, 232, 0.3)",
-        boxShadow: "0 2px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(77, 216, 232, 0.1)",
+        padding: "0 20px",
+        background: "linear-gradient(180deg, rgba(5, 8, 16, 0.85) 0%, rgba(5, 8, 16, 0.4) 100%)",
+        backdropFilter: "blur(20px) saturate(150%)",
+        borderBottom: "1px solid rgba(77, 216, 232, 0.25)",
+        boxShadow:
+          "0 4px 32px rgba(0, 0, 0, 0.6)," +
+          "inset 0 1px 0 rgba(77, 216, 232, 0.08)," +
+          "inset 0 -1px 0 rgba(77, 216, 232, 0.05)",
         fontFamily: "var(--wm-font-mono)",
-        fontSize: "0.65rem",
-        color: "#4DD8E8",
-        letterSpacing: "0.05em",
+        // Force own compositor layer to prevent WebGL canvas flicker bleed
+        transform: "translateZ(0)",
+        willChange: "transform",
+        isolation: "isolate",
       }}
     >
-      {/* Left: System Designation */}
-      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-        <div
-          style={{
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            background: "#2ECC71",
-            boxShadow: "0 0 8px #2ECC71, 0 0 16px #2ECC71",
-            animation: "pulse-dot 2s ease-in-out infinite",
-          }}
-        />
-        <div style={{
-          fontFamily: "var(--wm-font-display)",
-          fontSize: "0.8rem",
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "#4DD8E8",
-          textShadow: "0 0 8px #4DD8E8",
-        }}>
-          CAMPAIGN VISUALIZER <span style={{ opacity: 0.4, margin: "0 8px" }}>—</span> 3D TACTICAL DISPLAY
-        </div>
-      </div>
-
-      {/* Center: Status Badges */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
-        <span
-          style={{
-            fontFamily: "var(--wm-font-display)",
-            fontSize: "0.6rem",
-            fontWeight: 700,
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-            padding: "5px 14px",
-            borderRadius: "100px",
-            background: "rgba(46, 204, 113, 0.15)",
-            border: "1px solid rgba(46, 204, 113, 0.5)",
-            color: "#2ECC71",
-            boxShadow: "0 0 12px rgba(46, 204, 113, 0.3), inset 0 0 12px rgba(46, 204, 113, 0.1)",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <span style={{ position: "relative", zIndex: 1 }}>ACTIVE</span>
-          <span
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: "linear-gradient(90deg, transparent, rgba(46, 204, 113, 0.3), transparent)",
-              backgroundSize: "200% 100%",
-              animation: "scan-line 3s linear infinite",
-            }}
-          />
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--wm-font-display)",
-            fontSize: "0.6rem",
-            fontWeight: 700,
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-            padding: "5px 14px",
-            borderRadius: "100px",
-            background: "rgba(77, 216, 232, 0.15)",
-            border: "1px solid rgba(77, 216, 232, 0.5)",
-            color: "#4DD8E8",
-            boxShadow: "0 0 12px rgba(77, 216, 232, 0.3), inset 0 0 12px rgba(77, 216, 232, 0.1)",
-          }}
-        >
-          SECURE
-        </span>
-      </div>
-
-      {/* Right: System Telemetry */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "28px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", textAlign: "right" }}>
-          <span style={{ opacity: 0.5, fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>UTC</span>
-          <span style={{ fontWeight: 600, fontFamily: "var(--wm-font-mono)", letterSpacing: "0.1em", fontSize: "0.85rem" }}>{time}</span>
-        </div>
-        <div style={{ width: "1px", height: "22px", background: "rgba(77, 216, 232, 0.3)" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ opacity: 0.5, fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>STABILITY</span>
-          <span style={{ fontWeight: 600, color: "#2ECC71", fontFamily: "var(--wm-font-mono)", fontSize: "0.8rem" }}>99.9%</span>
-        </div>
-        <div style={{ width: "1px", height: "22px", background: "rgba(77, 216, 232, 0.3)" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "4px 12px", background: "rgba(77, 216, 232, 0.1)", border: "1px solid rgba(77, 216, 232, 0.3)", borderRadius: "4px" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#2ECC71", boxShadow: "0 0 6px #2ECC71", display: "inline-block", animation: "pulse-dot 1.5s ease-in-out infinite" }} />
-          <span style={{ fontSize: "0.55rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>TELEMETRY NOMINAL</span>
-        </div>
-      </div>
+      <HeaderContent />
     </header>
   );
-}
+});

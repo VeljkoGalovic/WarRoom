@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { Html, Grid } from "@react-three/drei";
 import * as THREE from "three";
+import { useShallow } from "zustand/react/shallow";
 import { useWarMapStore } from "./WarMap3DCanvas";
 
 // ============================================================================
@@ -65,88 +66,165 @@ const TACTICAL_NODES: TacticalNodeData[] = [
 ];
 
 // ============================================================================
-// SHARED GEOMETRIES & MATERIALS (module level for performance)
+// SHARED GEOMETRIES (module level for performance)
 // ============================================================================
 
-// Floor grid
-const floorGridGeometry = new THREE.PlaneGeometry(500, 500, 50, 50);
-
-// Sphere geometry for nodes
 const nodeSphereGeometry = new THREE.SphereGeometry(28, 64, 64);
-
-// Progress ring geometry
 const progressRingGeometry = new THREE.RingGeometry(34, 37, 128);
-
-// Core glow geometry
 const coreGlowGeometry = new THREE.SphereGeometry(32, 32, 32);
 
 // ============================================================================
-// COMPONENTS
+// INFINITE GRID - Using Drei's Grid component
 // ============================================================================
 
-// Floor Grid - subtle holographic reference plane
-function FloorGrid() {
-  const gridRef = React.useRef<THREE.Mesh | null>(null);
-  const timeRef = React.useRef(0);
-
-  const gridMaterial = React.useMemo(() => new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    uniforms: {
-      uTime: { value: 0 },
-      uColor: { value: new THREE.Color(COLORS.holoCyan) },
-    },
-    vertexShader: `
-      varying vec2 vUv;
-      varying vec3 vPosition;
-      void main() {
-        vUv = uv;
-        vPosition = position;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      varying vec2 vUv;
-      varying vec3 vPosition;
-      uniform float uTime;
-      uniform vec3 uColor;
-
-      float grid(vec2 uv, float scale) {
-        vec2 r = abs(fract(uv * scale) - 0.5);
-        float lines = step(0.49, max(r.x, r.y));
-        return lines;
-      }
-
-      void main() {
-        float g = grid(vUv * 20.0 + uTime * 0.02, 1.0);
-        float dist = length(vPosition.xz) / 250.0;
-        float alpha = g * (1.0 - dist) * 0.15;
-        alpha += sin(vPosition.x * 0.05 + uTime * 0.3) * 0.02 * (1.0 - dist);
-        gl_FragColor = vec4(uColor, alpha);
-      }
-    `,
-  }), []);
-
-  useFrame((_, delta) => {
-    timeRef.current += delta;
-    if (gridRef.current) {
-      (gridRef.current.material as THREE.ShaderMaterial).uniforms.uTime.value = timeRef.current;
-    }
-  });
-
+function InfiniteGrid() {
   return (
-    <mesh
-      ref={gridRef}
-      geometry={floorGridGeometry}
-      material={gridMaterial}
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, -1, 0] as [number, number, number]}
+    <Grid
+      args={[4000, 400]}
+      cellColor="#082028"
+      cellSize={50}
+      cellThickness={0.5}
+      fadeDistance={2000}
+      fadeStrength={0.5}
+      infiniteGrid={true}
+      position={[0, 0, 0]}
+      sectionColor="#0f3844"
+      sectionSize={200}
+      sectionThickness={1}
     />
   );
 }
 
-// Tactical Node - Large glowing sphere with progress ring
+// ============================================================================
+// AMBIENT PARTICLES - Atmospheric depth particles
+// ============================================================================
+
+function AmbientParticles() {
+  const particlesRef = React.useRef<THREE.Points | null>(null);
+  const timeRef = React.useRef(0);
+
+  const { positions, colors, sizes } = React.useMemo(() => {
+    const count = 400; // Reduced from 800
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+
+    const colorOptions = [
+      new THREE.Color(COLORS.holoCyan),
+      new THREE.Color(COLORS.progressAmber),
+      new THREE.Color(COLORS.conquestGreen),
+      new THREE.Color(0x8899aa),
+    ];
+
+    for (let i = 0; i < count; i++) {
+      const radius = 50 + Math.random() * 400;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+
+      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+      positions[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+
+      const color = colorOptions[Math.floor(Math.random() * colorOptions.length)];
+      colors[i * 3] = color.r * 0.6; // Darker particles
+      colors[i * 3 + 1] = color.g * 0.6;
+      colors[i * 3 + 2] = color.b * 0.6;
+
+      sizes[i] = 0.3 + Math.random() * 1.5; // Smaller
+    }
+
+    return { positions, colors, sizes };
+  }, []);
+
+  const particleGeometry = React.useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    return geom;
+  }, []);
+
+  const particleMaterial = React.useMemo(() => new THREE.PointsMaterial({
+    size: 1,
+    transparent: true,
+    opacity: 0.25,
+    vertexColors: true,
+    sizeAttenuation: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }), []);
+
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+    if (particlesRef.current) {
+      const pos = particlesRef.current.geometry.attributes.position.array as Float32Array;
+      const count = pos.length / 3;
+
+      for (let i = 0; i < count; i++) {
+        pos[i * 3 + 1] += delta * 0.3 * (0.5 + Math.sin(timeRef.current + i) * 0.5);
+        if (pos[i * 3 + 1] > 100) pos[i * 3 + 1] = -100;
+      }
+      particlesRef.current.geometry.attributes.position.needsUpdate = true;
+      particlesRef.current.rotation.y += delta * 0.005;
+    }
+  });
+
+  return <points ref={particlesRef} geometry={particleGeometry} material={particleMaterial} />;
+}
+
+// ============================================================================
+// HYPERLANES - Curved glowing tubes between tactical nodes
+// ============================================================================
+
+function Hyperlane({ from, to, color, isActive }: {
+  from: [number, number, number];
+  to: [number, number, number];
+  color: number;
+  isActive: boolean
+}) {
+  const timeRef = React.useRef(0);
+  const tubeRef = React.useRef<THREE.Mesh | null>(null);
+
+  const tubeGeometry = React.useMemo(() => {
+    const midX = (from[0] + to[0]) / 2;
+    const midY = 25; // Arc height
+    const midZ = (from[2] + to[2]) / 2;
+
+    const curve = new THREE.CubicBezierCurve3(
+      new THREE.Vector3(...from),
+      new THREE.Vector3(from[0], midY, from[2]),
+      new THREE.Vector3(to[0], midY, to[2]),
+      new THREE.Vector3(...to)
+    );
+
+    const geometry = new THREE.TubeGeometry(curve, 64, 1.2, 8, false);
+    return geometry;
+  }, [from, to]);
+
+  const tubeMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: isActive ? 0.35 : 0.1,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+  }), [color, isActive]);
+
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+    if (tubeRef.current) {
+      const opacity = isActive ? 0.3 + Math.sin(timeRef.current * 3) * 0.1 : 0.08;
+      (tubeRef.current.material as THREE.MeshBasicMaterial).opacity = opacity;
+    }
+  });
+
+  return <mesh ref={tubeRef} geometry={tubeGeometry} material={tubeMaterial} />;
+}
+
+// ============================================================================
+// TACTICAL NODE - Large glowing sphere with progress ring
+// ============================================================================
+
 const TacticalNode = React.memo(function TacticalNode({
   node,
   onSelect,
@@ -168,21 +246,21 @@ const TacticalNode = React.memo(function TacticalNode({
   const { camera } = useThree();
 
   const isInteractive = isSelected || isHovered;
-  const intensityMultiplier = isInteractive ? 1.5 : 1.0;
+  const intensityMultiplier = isInteractive ? 1.3 : 1.0;
 
   // Sphere material with emissive glow
   const sphereMaterial = React.useMemo(() => new THREE.MeshPhysicalMaterial({
     color: node.color,
     transparent: true,
-    opacity: 0.25 * intensityMultiplier,
-    transmission: 0.4,
+    opacity: 0.15 * intensityMultiplier,
+    transmission: 0.3,
     thickness: 0.8,
-    roughness: 0.1,
+    roughness: 0.05,
     metalness: 0.0,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.1,
+    clearcoatRoughness: 0.05,
     emissive: new THREE.Color(node.color),
-    emissiveIntensity: (node.state === "at-risk" ? 2.5 : node.state === "active" ? 2.0 : 1.5) * intensityMultiplier,
+    emissiveIntensity: (node.state === "at-risk" ? 1.6 : node.state === "active" ? 1.4 : 1.0) * intensityMultiplier,
     side: THREE.DoubleSide,
     depthWrite: false,
   }), [node.color, node.state, intensityMultiplier]);
@@ -191,19 +269,21 @@ const TacticalNode = React.memo(function TacticalNode({
   const ringMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: node.color,
     transparent: true,
-    opacity: 0.9,
+    opacity: 0.95,
     side: THREE.DoubleSide,
     depthWrite: false,
     depthTest: true,
+    blending: THREE.AdditiveBlending,
   }), [node.color]);
 
   // Core inner glow
   const coreMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
     color: node.color,
     transparent: true,
-    opacity: 0.15 * intensityMultiplier,
+    opacity: 0.1 * intensityMultiplier,
     side: THREE.BackSide,
     depthWrite: false,
+    blending: THREE.AdditiveBlending,
   }), [node.color, intensityMultiplier]);
 
   // Particle system for orbiting elements
@@ -211,7 +291,7 @@ const TacticalNode = React.memo(function TacticalNode({
     color: node.color,
     size: 1.2,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.6,
     sizeAttenuation: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
@@ -219,18 +299,18 @@ const TacticalNode = React.memo(function TacticalNode({
 
   // Create orbiting particles
   const particlePositions = React.useMemo(() => {
-    const count = node.state === "conquered" ? 12 : node.state === "active" ? 16 : 20;
+    const count = node.state === "conquered" ? 14 : node.state === "active" ? 18 : 22;
     const positions = new Float32Array(count * 3);
     const baseRadii: number[] = [];
     const speeds: number[] = [];
     const phases: number[] = [];
 
     for (let i = 0; i < count; i++) {
-      const radius = 38 + Math.random() * 12;
+      const radius = 38 + Math.random() * 14;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
       baseRadii.push(radius);
-      speeds.push(0.15 + Math.random() * 0.15);
+      speeds.push(0.12 + Math.random() * 0.18);
       phases.push(Math.random() * Math.PI * 2);
 
       positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
@@ -241,20 +321,50 @@ const TacticalNode = React.memo(function TacticalNode({
     return { positions, baseRadii, speeds, phases, count };
   }, [node.state]);
 
+  // Particle geometry
+  const particleGeometry = React.useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(particlePositions.positions, 3));
+    return geom;
+  }, []);
+
+  // Selection highlight geometry & material (stable references)
+  const selectionRingGeometry = React.useMemo(() => new THREE.RingGeometry(48, 52, 64), []);
+  const selectionRingMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: node.color,
+    transparent: true,
+    opacity: 0.5,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  }), [node.color]);
+
+  // Progress ring background material
+  const progressRingBgMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: 0x050810,
+    transparent: true,
+    opacity: 0.25,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  }), []);
+
+  // State indicator ring geometry & material
+  const stateRingGeometry = React.useMemo(() => new THREE.RingGeometry(42, 44, 64), []);
+  const stateRingMaterial = React.useMemo(() => new THREE.MeshBasicMaterial({
+    color: node.color,
+    transparent: true,
+    opacity: 0.7,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  }), [node.color]);
+
+  // Animation frame
   useFrame((_, delta) => {
     timeRef.current += delta;
 
-    // Group rotation
-    if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.02;
-    }
-
-    // Sphere pulse
+    // Sphere rotation
     if (sphereRef.current) {
-      const pulse = 1 + Math.sin(timeRef.current * 1.5) * 0.03 * intensityMultiplier;
-      sphereRef.current.scale.setScalar(pulse);
-
-      // Rotate sphere slowly
       sphereRef.current.rotation.y += delta * 0.05;
       sphereRef.current.rotation.x += delta * 0.03;
     }
@@ -271,9 +381,9 @@ const TacticalNode = React.memo(function TacticalNode({
     if (groupRef.current) {
       const core = groupRef.current.getObjectByName("core-glow");
       if (core) {
-        const pulse = 1 + Math.sin(timeRef.current * 2.5) * 0.15;
+        const pulse = 1 + Math.sin(timeRef.current * 2.5) * 0.18;
         core.scale.setScalar(pulse);
-        (core.material as THREE.MeshBasicMaterial).opacity = 0.15 * intensityMultiplier * (0.7 + Math.sin(timeRef.current * 3) * 0.3);
+        (core.material as THREE.MeshBasicMaterial).opacity = 0.2 * intensityMultiplier * (0.6 + Math.sin(timeRef.current * 3) * 0.4);
       }
     }
 
@@ -313,11 +423,7 @@ const TacticalNode = React.memo(function TacticalNode({
       {/* Outer particle cloud */}
       <points
         ref={particlesRef}
-        geometry={React.useMemo(() => {
-          const geom = new THREE.BufferGeometry();
-          geom.setAttribute('position', new THREE.BufferAttribute(particlePositions.positions, 3));
-          return geom;
-        }, [])}
+        geometry={particleGeometry}
         material={particlesMaterial}
       />
 
@@ -350,24 +456,14 @@ const TacticalNode = React.memo(function TacticalNode({
       {/* Progress ring background (subtle) */}
       <mesh
         geometry={progressRingGeometry}
-        material={React.useMemo(() => new THREE.MeshBasicMaterial({
-          color: 0x050810,
-          transparent: true,
-          opacity: 0.3,
-          side: THREE.DoubleSide,
-        }), [])}
+        material={progressRingBgMaterial}
         rotation={[-Math.PI / 2, 0, 0]}
       />
 
       {/* State indicator ring at top */}
       <mesh
-        geometry={React.useMemo(() => new THREE.RingGeometry(42, 44, 64), [])}
-        material={React.useMemo(() => new THREE.MeshBasicMaterial({
-          color: node.color,
-          transparent: true,
-          opacity: 0.6,
-          side: THREE.DoubleSide,
-        }), [node.color])}
+        geometry={stateRingGeometry}
+        material={stateRingMaterial}
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 35, 0] as [number, number, number]}
         scale={1 + Math.sin(timeRef.current * 3) * 0.1}
@@ -446,16 +542,11 @@ const TacticalNode = React.memo(function TacticalNode({
         </div>
       </Html>
 
-      {/* Selection highlight */}
+      {/* Selection highlight - stable geometry/material */}
       {isSelected && (
         <mesh
-          geometry={React.useMemo(() => new THREE.RingGeometry(48, 52, 64), [])}
-          material={React.useMemo(() => new THREE.MeshBasicMaterial({
-            color: node.color,
-            transparent: true,
-            opacity: 0.4,
-            side: THREE.DoubleSide,
-          }), [node.color])}
+          geometry={selectionRingGeometry}
+          material={selectionRingMaterial}
           rotation={[-Math.PI / 2, 0, 0]}
           scale={1 + Math.sin(timeRef.current * 4) * 0.15}
         />
@@ -464,188 +555,79 @@ const TacticalNode = React.memo(function TacticalNode({
   );
 });
 
-// Hyperlane - Curved glowing tubes between nodes
-function Hyperlane({ from, to, color, isActive }: { from: [number, number, number]; to: [number, number, number]; color: number; isActive: boolean }) {
-  const timeRef = React.useRef(0);
-  const tubeRef = React.useRef<THREE.Mesh | null>(null);
+// ============================================================================
+// CAMERA CONTROLLER - Cinematic auto-orbit with smooth damping
+// ============================================================================
 
-  const tubeGeometry = React.useMemo(() => {
-    const midX = (from[0] + to[0]) / 2;
-    const midY = 25; // Arc height
-    const midZ = (from[2] + to[2]) / 2;
-
-    const curve = new THREE.CubicBezierCurve3(
-      new THREE.Vector3(...from),
-      new THREE.Vector3(from[0], midY, from[2]),
-      new THREE.Vector3(to[0], midY, to[2]),
-      new THREE.Vector3(...to)
-    );
-
-    return new THREE.TubeGeometry(curve, 64, 1.5, 8, false);
-  }, [from, to]);
-
-  const tubeMaterial = React.useMemo(() => new THREE.MeshPhysicalMaterial({
-    color,
-    transparent: true,
-    opacity: isActive ? 0.6 : 0.35,
-    emissive: new THREE.Color(color),
-    emissiveIntensity: isActive ? 1.5 : 0.8,
-    roughness: 0.2,
-    metalness: 0.1,
-    clearcoat: 1.0,
-    clearcoatRoughness: 0.1,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-  }), [color, isActive]);
-
-  useFrame((_, delta) => {
-    timeRef.current += delta;
-
-    // Animate tube emissive pulse
-    if (tubeRef.current) {
-      const pulse = 1 + Math.sin(timeRef.current * 2) * 0.3;
-      (tubeRef.current.material as THREE.MeshPhysicalMaterial).emissiveIntensity = (isActive ? 1.5 : 0.8) * pulse;
-    }
-  });
-
-  return (
-    <mesh
-      ref={tubeRef}
-      geometry={tubeGeometry}
-      material={tubeMaterial}
-    />
-  );
-}
-
-// Camera Controller - Cinematic auto-orbit
 function CameraController() {
   const { camera } = useThree();
+  const { cameraTarget, isAnimating, setCameraTarget } = useWarMapStore(
+    useShallow((s) => ({
+      cameraTarget: s.cameraTarget,
+      isAnimating: s.isAnimating,
+      setCameraTarget: s.setCameraTarget,
+    }))
+  );
+
   const timeRef = React.useRef(0);
-  const targetRef = React.useRef(new THREE.Vector3(-10, 0, -10));
+  const targetRef = React.useRef(new THREE.Vector3(0, 0, 0));
+  const radiusRef = React.useRef(350);
+  const phiRef = React.useRef(Math.PI / 3);
+  const thetaRef = React.useRef(0);
+  const autoRotateRef = React.useRef(true);
 
   useFrame((_, delta) => {
     timeRef.current += delta;
-    const radius = 280;
-    const height = 120;
-    const angle = timeRef.current * 0.04; // Slow cinematic orbit
 
-    // Smooth camera position
-    const targetX = Math.cos(angle) * radius;
-    const targetZ = Math.sin(angle) * radius;
+    // Smoothly interpolate to target if animating
+    if (isAnimating) {
+      targetRef.current.lerp(cameraTarget, 0.05);
+      if (targetRef.current.distanceTo(cameraTarget) < 1) {
+        setCameraTarget(cameraTarget, false);
+      }
+    }
 
-    camera.position.lerp(new THREE.Vector3(targetX, height + Math.sin(timeRef.current * 0.08) * 15, targetZ), delta * 1.5);
+    // Auto-rotate when not animating
+    if (autoRotateRef.current && !isAnimating) {
+      thetaRef.current += delta * 0.15;
+    }
 
-    // Smooth look-at target
-    targetRef.current.lerp(new THREE.Vector3(-10, 0, -10), delta * 2);
+    // Calculate camera position from spherical coordinates
+    const x = targetRef.current.x + radiusRef.current * Math.sin(phiRef.current) * Math.cos(thetaRef.current);
+    const y = targetRef.current.y + radiusRef.current * Math.cos(phiRef.current);
+    const z = targetRef.current.z + radiusRef.current * Math.sin(phiRef.current) * Math.sin(thetaRef.current);
+
+    // Smooth camera movement
+    camera.position.lerp(new THREE.Vector3(x, y, z), 0.08);
     camera.lookAt(targetRef.current);
   });
 
   return null;
 }
 
-// Ambient floating particles for atmosphere
-function AmbientParticles() {
-  const timeRef = React.useRef(0);
-  const pointsRef = React.useRef<THREE.Points | null>(null);
-
-  const particleData = React.useMemo(() => {
-    const count = 800;
-    const positions = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
-    const alphas = new Float32Array(count);
-    const speeds = new Float32Array(count);
-    const baseY = new Float32Array(count);
-
-    for (let i = 0; i < count; i++) {
-      const radius = 50 + Math.random() * 300;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-
-      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta) * 0.3; // Flattened
-      positions[i * 3 + 2] = radius * Math.cos(phi);
-
-      sizes[i] = 0.5 + Math.random() * 1.5;
-      alphas[i] = 0.1 + Math.random() * 0.4;
-      speeds[i] = 0.02 + Math.random() * 0.03;
-      baseY[i] = positions[i * 3 + 1];
-    }
-
-    return { positions, sizes, alphas, speeds, baseY, count };
-  }, []);
-
-  const geometry = React.useMemo(() => {
-    const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.BufferAttribute(particleData.positions, 3));
-    geom.setAttribute('size', new THREE.BufferAttribute(particleData.sizes, 1));
-    geom.setAttribute('alpha', new THREE.BufferAttribute(particleData.alphas, 1));
-    return geom;
-  }, []);
-
-  const material = React.useMemo(() => new THREE.PointsMaterial({
-    color: COLORS.holoCyan,
-    size: 1,
-    transparent: true,
-    opacity: 0.4,
-    sizeAttenuation: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    vertexColors: false,
-  }), []);
-
-  useFrame((_, delta) => {
-    timeRef.current += delta;
-
-    if (pointsRef.current) {
-      const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
-      const { speeds, baseY, count } = particleData;
-
-      for (let i = 0; i < count; i++) {
-        // Slow orbital motion
-        const x = positions[i * 3];
-        const z = positions[i * 3 + 2];
-        const angle = Math.atan2(z, x) + delta * speeds[i];
-        const radius = Math.sqrt(x * x + z * z);
-
-        positions[i * 3] = Math.cos(angle) * radius;
-        positions[i * 3 + 2] = Math.sin(angle) * radius;
-
-        // Vertical drift
-        positions[i * 3 + 1] = baseY[i] + Math.sin(timeRef.current * speeds[i] * 10 + i) * 5;
-      }
-      pointsRef.current.geometry.attributes.position.needsUpdate = true;
-
-      pointsRef.current.rotation.y += delta * 0.002;
-    }
-  });
-
-  return <points ref={pointsRef} geometry={geometry} material={material} />;
-}
-
 // ============================================================================
-// MAIN INNER COMPONENT
+// MAIN INNER CANVAS
 // ============================================================================
 
 export function WarMap3DCanvasInner() {
-  const { selectedNodeId, hoveredNodeId, setHoveredNode, setSelectedNode } = useWarMapStore(
-    (s) => ({
-      selectedNodeId: s.selectedNodeId,
-      hoveredNodeId: s.hoveredNodeId,
-      setHoveredNode: s.setHoveredNode,
-      setSelectedNode: s.setSelectedNode,
-    })
-  );
+  const selectedNodeId = useWarMapStore(useShallow((s) => s.selectedNodeId));
+  const hoveredNodeId = useWarMapStore(useShallow((s) => s.hoveredNodeId));
+  const setHoveredNode = useWarMapStore(useShallow((s) => s.setHoveredNode));
+  const setSelectedNode = useWarMapStore(useShallow((s) => s.setSelectedNode));
 
   return (
     <>
-      {/* Background - Deep Void */}
+      {/* Background - Deep Void with subtle gradient */}
       <color attach="background" args={[COLORS.void]} />
+
+      {/* Fog for atmospheric depth */}
+      <fog attach="fog" args={[COLORS.void, 50, 800]} />
+
+      {/* Infinite Grid - replaces finite floor grid */}
+      <InfiniteGrid />
 
       {/* Ambient Atmosphere Particles */}
       <AmbientParticles />
-
-      {/* Floor Grid */}
-      <FloorGrid />
 
       {/* Hyperlanes - Connections between tactical nodes */}
       <Hyperlane

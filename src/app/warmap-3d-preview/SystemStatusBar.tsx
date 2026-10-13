@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useWarMapStore } from "./WarMap3DCanvas";
 
 interface LogEntry {
@@ -23,22 +24,32 @@ if (typeof window !== "undefined" && !window.__SYSTEM_STATUS_STYLES_INJECTED__) 
       0% { transform: translateX(100%); }
       100% { transform: translateX(-100%); }
     }
+    @keyframes corner-pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    @keyframes bar-pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
   `;
   document.head.appendChild(style);
 }
 
-export function SystemStatusBar() {
-  const logEntries = useWarMapStore((s) => s.logEntries);
-  const [latestLog, setLatestLog] = React.useState<LogEntry | null>(null);
+const METRICS = [
+  { id: "cpu", label: "CPU", color: "#4DD8E8", unit: "%" },
+  { id: "mem", label: "MEM", color: "#FFB347", unit: "%" },
+  { id: "net", label: "NET", color: "#2ECC71", unit: "MB/s" },
+  { id: "gpu", label: "GPU", color: "#FF4D5E", unit: "%" },
+] as const;
 
-  React.useEffect(() => {
-    if (logEntries.length > 0) {
-      setLatestLog(logEntries[0]);
-    }
-  }, [logEntries]);
-
+// Isolated uptime component - only re-renders for uptime
+function UptimeDisplay() {
   const [uptime, setUptime] = React.useState<string>("00:00:00");
+  const [isMounted, setIsMounted] = React.useState(false);
+
   React.useEffect(() => {
+    setIsMounted(true);
     const startTime = Date.now();
     const updateUptime = () => {
       const elapsed = Date.now() - startTime;
@@ -52,97 +63,312 @@ export function SystemStatusBar() {
     return () => clearInterval(interval);
   }, []);
 
-  return (
-    <footer
-      style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: "40px",
-        zIndex: 30,
-        pointerEvents: "auto",
-        display: "grid",
-        gridTemplateColumns: "300px 1fr 380px",
-        alignItems: "center",
-        padding: "0 24px",
-        background: "rgba(5, 8, 16, 0.95)",
-        backdropFilter: "blur(12px)",
-        borderTop: "1px solid rgba(77, 216, 232, 0.3)",
-        boxShadow: "0 -2px 20px rgba(0, 0, 0, 0.5), inset 0 -1px 0 rgba(77, 216, 232, 0.1)",
+  if (!isMounted) {
+    return (
+      <span style={{
         fontFamily: "var(--wm-font-mono)",
         fontSize: "0.55rem",
-        color: "#4DD8E8",
-        letterSpacing: "0.05em",
-      }}
-    >
-      {/* Left: System Resources */}
-      <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <SystemMetric label="CPU" value="23%" color="#2ECC71" />
-          <SystemMetric label="MEM" value="1.2/4.0GB" color="#4DD8E8" />
-          <SystemMetric label="NET" value="42ms" color="#FFB347" />
-          <SystemMetric label="GPU" value="67%" color="#FF4D5E" />
-        </div>
-      </div>
+        fontVariantNumeric: "tabular-nums",
+        color: "#E2E8F0",
+        opacity: 0.5,
+      }}>00:00:00</span>
+    );
+  }
 
-      {/* Center: Active Operation / Latest Log */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#FFB347", boxShadow: "0 0 8px #FFB347", animation: "pulse-dot 1.5s ease-in-out infinite" }} />
-          <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "#FFB347" }}>
-            {latestLog ? latestLog.event : "STANDBY"}
-          </span>
-        </div>
-        {latestLog && (
-          <div style={{
-            flex: 1,
-            maxWidth: "400px",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            opacity: 0.8,
-          }}>
-            <span style={{ display: "inline-block", animation: "marquee 15s linear infinite" }}>
-              {latestLog.detail}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Right: Version & Uptime */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ opacity: 0.5, textTransform: "uppercase", letterSpacing: "0.1em" }}>VERSION</span>
-          <span style={{ fontWeight: 600, fontFamily: "var(--wm-font-display)", fontSize: "0.65rem", color: "#4DD8E8" }}>
-            v2.3.1
-          </span>
-        </div>
-        <div style={{ width: "1px", height: "18px", background: "rgba(77, 216, 232, 0.3)" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ opacity: 0.5, textTransform: "uppercase", letterSpacing: "0.1em" }}>UPTIME</span>
-          <span style={{ fontWeight: 600, fontFamily: "var(--wm-font-mono)", color: "#2ECC71" }}>
-            {uptime}
-          </span>
-        </div>
-        <div style={{ width: "1px", height: "18px", background: "rgba(77, 216, 232, 0.3)" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "3px 10px", background: "rgba(77, 216, 232, 0.1)", border: "1px solid rgba(77, 216, 232, 0.3)", borderRadius: "3px" }}>
-          <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#2ECC71", boxShadow: "0 0 6px #2ECC71", display: "inline-block", animation: "pulse-dot 1.5s ease-in-out infinite" }} />
-          <span style={{ fontSize: "0.5rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>ALL SYSTEMS NOMINAL</span>
-        </div>
-      </div>
-    </footer>
+  return (
+    <span style={{
+      fontFamily: "var(--wm-font-mono)",
+      fontSize: "0.55rem",
+      fontVariantNumeric: "tabular-nums",
+      color: "#E2E8F0",
+    }}>{uptime}</span>
   );
 }
 
-function SystemMetric({ label, value, color }: { label: string; value: string; color: string }) {
+// Isolated metric display - only re-renders when its specific metric changes
+function MetricDisplay({ metric, value }: { metric: typeof METRICS[0]; value: number }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-      <span style={{ opacity: 0.5, fontSize: "0.5rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        {label}
-      </span>
-      <span style={{ fontWeight: 600, fontFamily: "var(--wm-font-mono)", fontSize: "0.65rem", color }}>
-        {value}
-      </span>
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      padding: "4px 8px",
+      background: "rgba(77, 216, 232, 0.04)",
+      border: "1px solid rgba(77, 216, 232, 0.1)",
+      borderRadius: "3px",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <span style={{
+          fontSize: "0.5rem",
+          fontWeight: 700,
+          letterSpacing: "0.05em",
+          color: metric.color,
+        }}>{metric.label}</span>
+        <span style={{
+          width: "5px",
+          height: "5px",
+          borderRadius: "50%",
+          background: metric.color,
+          boxShadow: `0 0 6px ${metric.color}`,
+          animation: "pulse-dot 1s ease-in-out infinite",
+        }} />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span style={{
+          fontFamily: "var(--wm-font-mono)",
+          fontSize: "0.65rem",
+          fontVariantNumeric: "tabular-nums",
+          fontWeight: 600,
+          color: "#E2E8F0",
+          minWidth: "36px",
+          textAlign: "right",
+        }}>{value.toFixed(0)}</span>
+        <span style={{
+          fontSize: "0.5rem",
+          color: "rgba(77, 216, 232, 0.6)",
+        }}>{metric.unit}</span>
+      </div>
     </div>
+  );
+}
+
+// Isolated metrics generator - only updates metrics state
+function MetricsProvider({ children }: { children: React.ReactNode }) {
+  const [metrics, setMetrics] = React.useState<Record<string, number>>({
+    cpu: 23,
+    mem: 45,
+    net: 12,
+    gpu: 8,
+  });
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setMetrics(prev => ({
+        cpu: Math.min(95, Math.max(5, prev.cpu + (Math.random() - 0.5) * 8)),
+        mem: Math.min(90, Math.max(10, prev.mem + (Math.random() - 0.5) * 5)),
+        net: Math.min(100, Math.max(0, prev.net + (Math.random() - 0.5) * 20)),
+        gpu: Math.min(80, Math.max(2, prev.gpu + (Math.random() - 0.5) * 10)),
+      }));
+    }, 800);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <MetricsContext.Provider value={metrics}>
+      {children}
+    </MetricsContext.Provider>
+  );
+}
+
+// Context to avoid prop drilling
+const MetricsContext = React.createContext<Record<string, number>>({});
+
+// Isolated latest log display
+function LatestLogDisplay() {
+  const logEntries = useWarMapStore(useShallow((s) => s.logEntries));
+  const [latestLog, setLatestLog] = React.useState<LogEntry | null>(null);
+
+  React.useEffect(() => {
+    if (logEntries.length > 0) {
+      setLatestLog(logEntries[0]);
+    }
+  }, [logEntries]);
+
+  if (!latestLog) return null;
+
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      padding: "0 12px",
+      background: "rgba(77, 216, 232, 0.04)",
+      border: "1px solid rgba(77, 216, 232, 0.1)",
+      borderRadius: "3px",
+      maxWidth: "400px",
+      overflow: "hidden",
+    }}>
+      <span style={{
+        fontFamily: "var(--wm-font-mono)",
+        fontSize: "0.55rem",
+        fontVariantNumeric: "tabular-nums",
+        color: "rgba(77, 216, 232, 0.7)",
+        whiteSpace: "nowrap",
+      }}>{latestLog.time}</span>
+      <span style={{
+        fontSize: "0.5rem",
+        fontWeight: 700,
+        letterSpacing: "0.05em",
+        textTransform: "uppercase",
+        color: latestLog.category === "warning" ? "#FF4D5E" :
+               latestLog.category === "success" ? "#2ECC71" : "#4DD8E8",
+        whiteSpace: "nowrap",
+      }}>{latestLog.event}</span>
+      <div style={{
+        flex: 1,
+        minWidth: 0,
+        overflow: "hidden",
+      }}>
+        <span style={{
+          fontFamily: "var(--wm-font-mono)",
+          fontSize: "0.55rem",
+          color: "#E2E8F0",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          display: "block",
+        }}>{latestLog.detail}</span>
+      </div>
+    </div>
+  );
+}
+
+// Memoized corner notches
+const CornerNotches = React.memo(function CornerNotches() {
+  return (
+    <>
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "16px",
+        height: "16px",
+        borderTop: "1px solid rgba(77, 216, 232, 0.35)",
+        borderLeft: "1px solid rgba(77, 216, 232, 0.35)",
+        pointerEvents: "none",
+        animation: "corner-pulse 3s ease-in-out infinite",
+      }} />
+      <div style={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        width: "16px",
+        height: "16px",
+        borderBottom: "1px solid rgba(77, 216, 232, 0.35)",
+        borderLeft: "1px solid rgba(77, 216, 232, 0.35)",
+        pointerEvents: "none",
+        animation: "corner-pulse 3s ease-in-out infinite 1.5s",
+      }} />
+      <div style={{
+        position: "absolute",
+        top: 0,
+        right: 0,
+        width: "16px",
+        height: "16px",
+        borderTop: "1px solid rgba(77, 216, 232, 0.35)",
+        borderRight: "1px solid rgba(77, 216, 232, 0.35)",
+        pointerEvents: "none",
+        animation: "corner-pulse 3s ease-in-out infinite 0.75s",
+      }} />
+      <div style={{
+        position: "absolute",
+        bottom: 0,
+        right: 0,
+        width: "16px",
+        height: "16px",
+        borderBottom: "1px solid rgba(77, 216, 232, 0.35)",
+        borderRight: "1px solid rgba(77, 216, 232, 0.35)",
+        pointerEvents: "none",
+        animation: "corner-pulse 3s ease-in-out infinite 2.25s",
+      }} />
+    </>
+  );
+});
+
+// Memoized right section (version info)
+const VersionInfo = React.memo(function VersionInfo() {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "12px",
+      paddingRight: "8px",
+    }}>
+      <div style={{
+        fontFamily: "var(--wm-font-mono)",
+        fontSize: "0.55rem",
+        letterSpacing: "0.1em",
+        color: "rgba(77, 216, 232, 0.5)",
+      }}>v2.4.1</div>
+    </div>
+  );
+});
+
+// Memoized left section (system metrics)
+const MetricsPanel = React.memo(function MetricsPanel() {
+  const metrics = React.useContext(MetricsContext);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "16px", paddingLeft: "8px" }}>
+      {METRICS.map((metric) => (
+        <MetricDisplay key={metric.id} metric={metric} value={metrics[metric.id]} />
+      ))}
+    </div>
+  );
+});
+
+// Memoized center section (uptime + latest log)
+const CenterPanel = React.memo(function CenterPanel() {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "24px" }}>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "4px 12px",
+        background: "rgba(77, 216, 232, 0.06)",
+        border: "1px solid rgba(77, 216, 232, 0.15)",
+        borderRadius: "3px",
+      }}>
+        <span style={{
+          fontFamily: "var(--wm-font-mono)",
+          fontSize: "0.55rem",
+          letterSpacing: "0.1em",
+          color: "#4DD8E8",
+        }}>UPTIME</span>
+        <UptimeDisplay />
+      </div>
+      <LatestLogDisplay />
+    </div>
+  );
+});
+
+// Main component with isolated re-render boundaries
+export function SystemStatusBar() {
+  return (
+    <MetricsProvider>
+      <footer
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "40px",
+          zIndex: 30,
+          pointerEvents: "auto",
+          display: "grid",
+          gridTemplateColumns: "300px 1fr 380px",
+          gridColumn: "1 / -1",
+          alignItems: "center",
+          padding: "0 20px",
+          background: "linear-gradient(0deg, rgba(5, 8, 16, 0.9) 0%, rgba(5, 8, 16, 0.5) 100%)",
+          backdropFilter: "blur(20px) saturate(150%)",
+          borderTop: "1px solid rgba(77, 216, 232, 0.2)",
+          boxShadow:
+            "0 -4px 32px rgba(0, 0, 0, 0.6)," +
+            "inset 0 1px 0 rgba(77, 216, 232, 0.08)," +
+            "inset 0 -1px 0 rgba(77, 216, 232, 0.05)",
+          fontFamily: "var(--wm-font-mono)",
+          // Force own compositor layer to prevent WebGL canvas flicker bleed
+          transform: "translateZ(0)",
+          willChange: "transform",
+          isolation: "isolate",
+        }}
+      >
+        <CornerNotches />
+        <MetricsPanel />
+        <CenterPanel />
+        <VersionInfo />
+      </footer>
+    </MetricsProvider>
   );
 }

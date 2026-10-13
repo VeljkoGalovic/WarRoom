@@ -70,25 +70,25 @@ export default function WarMap3DPreviewPage() {
           pointerEvents: "none",
           zIndex: 10,
           display: "grid",
-          gridTemplateRows: "60px 1fr 40px",
+          gridTemplateRows: "56px 1fr 40px",
           gridTemplateColumns: "300px 1fr 380px",
           height: "100vh",
           width: "100vw",
         }}
       >
         {/* Top: Campaign Header - Layer 20 */}
-        <CampaignHeader style={{ pointerEvents: "auto" }} />
+        <CampaignHeader />
 
         {/* Left: Staff Roster - Layer 20 */}
-        <StaffRosterPanel style={{ pointerEvents: "auto" }} />
+        <StaffRosterPanel />
 
         {/* Center: 3D Tactical Display (Canvas handles this) */}
 
         {/* Right: Daily Operations Log - Layer 20 */}
-        <DailyOpsLogPanel style={{ pointerEvents: "auto" }} />
+        <DailyOpsLogPanel />
 
         {/* Bottom: System Status Bar - Layer 30 */}
-        <SystemStatusBar style={{ pointerEvents: "auto", gridColumn: "1 / -1" }} />
+        <SystemStatusBar />
       </div>
     </main>
   );

@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette, ChromaticAberration, Noise } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
@@ -66,107 +65,21 @@ export const FAKE_NODES: WarMapNode[] = [
     position: [0, 0, 0],
     progress: 100,
     connections: [],
-    sectorId: "core",
-  },
-  {
-    id: "goal-1",
-    name: "TACTICAL PHYSICAL",
-    state: "conquered",
-    position: [-120, 0, -80],
-    progress: 100,
-    connections: ["command", "goal-2"],
-    sectorId: "alpha",
-  },
-  {
-    id: "goal-2",
-    name: "DEPLOY WAR",
-    state: "active",
-    position: [80, 0, -50],
-    progress: 67,
-    connections: ["command", "goal-1", "goal-3"],
-    sectorId: "beta",
-  },
-  {
-    id: "goal-3",
-    name: "REACH CODEFORCES",
-    state: "at-risk",
-    position: [-100, 0, 100],
-    progress: 23,
-    connections: ["command", "goal-2", "goal-4"],
-    sectorId: "gamma",
-  },
-  {
-    id: "goal-4",
-    name: "MASTER SYSTEMS",
-    state: "neutral",
-    progress: 45,
-    position: [120, 0, 80],
-    connections: ["command", "goal-3", "goal-5"],
-    sectorId: "beta",
-  },
-  {
-    id: "goal-5",
-    name: "INTERNATIONAL MATH",
-    state: "neutral",
-    progress: 12,
-    position: [-80, 0, -140],
-    connections: ["command", "goal-6"],
-    sectorId: "gamma",
-  },
-  {
-    id: "goal-6",
-    name: "SECURE COMMS",
-    state: "neutral",
-    progress: 0,
-    position: [-130, 0, 10],
-    connections: ["command", "goal-5", "goal-7"],
-    sectorId: "gamma",
-  },
-  {
-    id: "goal-7",
-    name: "ESTABLISH FOOTHOLD",
-    state: "neutral",
-    progress: 0,
-    position: [-50, 0, -60],
-    connections: ["command", "goal-6"],
     sectorId: "alpha",
   },
 ];
 
-export const SECTOR_HUBS = [
-  { id: "alpha", name: "SECTOR ALPHA", position: [-100, 0, -100] as [number, number, number], color: COLORS.holoCyan },
-  { id: "beta", name: "SECTOR BETA", position: [100, 0, 50] as [number, number, number], color: COLORS.progressAmber },
-  { id: "gamma", name: "SECTOR GAMMA", position: [-90, 0, 90] as [number, number, number], color: COLORS.conquestGreen },
-];
-
-export const MILESTONES: MilestoneData[] = [
-  { id: "m1", title: "INITIAL RECON", completed: true, nodeId: "goal-1" },
-  { id: "m2", title: "ASSET DEPLOYMENT", completed: true, nodeId: "goal-1" },
-  { id: "m3", title: "PERIMETER ESTABLISHED", completed: true, nodeId: "goal-1" },
-  { id: "m4", title: "INTEL GATHERING", completed: false, nodeId: "goal-2" },
-  { id: "m5", title: "TARGET NEUTRALIZATION", completed: false, nodeId: "goal-2" },
-  { id: "m6", title: "SECTOR SECURED", completed: false, nodeId: "goal-2" },
-];
-
-export const FOG_POSITIONS = [
-  { position: [200, 0, -50] as [number, number, number], radius: 60, name: "UNKNOWN SECTOR 7" },
-  { position: [-200, 0, -120] as [number, number, number], radius: 60, name: "UNKNOWN SECTOR 3" },
-  { position: [80, 0, -180] as [number, number, number], radius: 50, name: "UNKNOWN SECTOR 9" },
-];
+export const FAKE_MILESTONES: MilestoneData[] = [];
 
 const INITIAL_LOG_ENTRIES: LogEntry[] = [
-  { time: "14:22", event: "MILESTONE SECURED", detail: "TACTICAL PHYSICAL — 5K TIME", category: "Physical Training" },
-  { time: "14:18", event: "HYPERLANE ESTABLISHED", detail: "GOAL-2 → GOAL-3 LINK ACTIVE", category: "System Engineering" },
-  { time: "14:15", event: "CONTACT LOST", detail: "REACH CODEFORCES — SIGNAL DEGRADED", category: "Codeforces/Algorithmic" },
-  { time: "14:10", event: "SECTOR SCAN COMPLETE", detail: "FOG SECTOR 7 — UNKNOWN SIGNATURES", category: "System Engineering" },
-  { time: "14:05", event: "RESOURCE ALLOCATED", detail: "DEPLOY WAR — +15% MOMENTUM", category: "SaaS Architecture" },
-  { time: "13:58", event: "THREAT DETECTED", detail: "SECTOR 3 — HOSTILE ACTIVITY", category: "System Engineering" },
-  { time: "13:52", event: "LINK ESTABLISHED", detail: "COMMAND ↔ SECURE COMMS", category: "System Engineering" },
-  { time: "13:47", event: "INTEL UPDATE", detail: "MASTER SYSTEMS — TARGET ACQUIRED", category: "Strategic Analysis" },
+  { time: "06:42:13", event: "SYSTEM ONLINE", detail: "Tactical display initialized", category: "system" },
+  { time: "06:42:15", event: "NODE SYNC", detail: "Tactical Physical sector reporting nominal", category: "success" },
+  { time: "06:42:18", event: "PIPELINE ACTIVE", detail: "Deploy War pipeline engaged", category: "info" },
+  { time: "06:42:22", event: "WARNING", detail: "Codeforces sector signal degraded", category: "warning" },
 ];
 
 // ============================================================================
-// STATE MANAGEMENT
+// ZUSTAND STORE - Single source of truth for canvas state
 // ============================================================================
 
 interface WarMapState {
@@ -196,6 +109,68 @@ export const useWarMapStore = create<WarMapState>((set) => ({
 }));
 
 // ============================================================================
+// LIGHTING SETUP
+// ============================================================================
+
+function SceneLighting() {
+  return (
+    <>
+      {/* Minimal ambient - keep deep space dark */}
+      <ambientLight intensity={0.15} color="#0a1520" />
+
+      {/* Subtle hemisphere for depth - very low */}
+      <hemisphereLight
+        args={["#0a1828", "#030610"]}
+        intensity={0.4}
+      />
+
+      {/* Main directional - cool cyan, very subtle */}
+      <directionalLight
+        position={[100, 200, 150]}
+        intensity={0.6}
+        color="#4dd8e8"
+        castShadow={false}
+      />
+
+      {/* Warm accent - heavily toned down */}
+      <directionalLight
+        position={[-150, 100, -100]}
+        intensity={0.3}
+        color="#ff8847"
+        castShadow={false}
+      />
+
+      {/* Green accent - subtle */}
+      <directionalLight
+        position={[50, 150, 200]}
+        intensity={0.25}
+        color="#2ecc71"
+        castShadow={false}
+      />
+
+      {/* Red accent - subtle */}
+      <directionalLight
+        position={[-80, 80, 250]}
+        intensity={0.2}
+        color="#ff4d5e"
+        castShadow={false}
+      />
+
+      {/* NO point lights at nodes - they create the harsh glow */}
+      {/* Nodes provide their own emissive glow */}
+
+      {/* Very subtle rim from below */}
+      <directionalLight
+        position={[0, -100, 0]}
+        intensity={0.1}
+        color="#4dd8e8"
+        castShadow={false}
+      />
+    </>
+  );
+}
+
+// ============================================================================
 // MAIN CANVAS COMPONENT
 // ============================================================================
 
@@ -207,22 +182,41 @@ export function WarMap3DCanvas() {
       onCreated={({ gl }) => {
         gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.6;
+        gl.toneMappingExposure = 1.2; // Reduced exposure for deeper blacks
+        gl.shadowMap.enabled = false; // Disable shadows for performance
       }}
     >
-      {/* No OrbitControls - we use cinematic camera controller in Inner */}
+      {/* Scene Lighting */}
+      <SceneLighting />
+
+      {/* Post-processing stack */}
       <Suspense fallback={null}>
         <EffectComposer multisampling={8}>
+          {/* Subtle bloom - only brightest highlights */}
           <Bloom
-            luminanceThreshold={0.6}
-            intensity={1.2}
-            radius={0.8}
+            luminanceThreshold={0.75}
+            intensity={0.6}
+            radius={0.6}
+            mipmapBlur={true}
           />
+
+          {/* Subtle chromatic aberration for sci-fi feel */}
+          <ChromaticAberration offset={[0.0005, 0.0003]} />
+
+          {/* Very subtle film grain */}
+          <Noise
+            opacity={0.015}
+            premultiply={true}
+          />
+
+          {/* Gentle vignette to focus center */}
           <Vignette
             eskil={false}
             offset={0.4}
-            darkness={0.5}
+            darkness={0.3}
           />
+
+          {/* Main scene content */}
           <WarMap3DCanvasInner />
         </EffectComposer>
       </Suspense>
