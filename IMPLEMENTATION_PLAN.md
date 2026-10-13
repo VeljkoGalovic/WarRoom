@@ -1,132 +1,265 @@
-# WarRoom — War Map Static Mockup Implementation Prompt
+# 3D Tactical Command Center - Implementation Plan
+## Target: Match Proof of Concept Aesthetic While Maintaining Usability
 
-You are working on WarRoom, a Next.js 16 (App Router, Turbopack) productivity app that gamifies personal goals as a sci-fi military campaign. The stack is Postgres + Prisma + Redis + NextAuth, styled with Tailwind and shadcn/ui. The AI agent layer is already implemented and working. Do not touch it.
+---
 
-Your job is to build a **static visual mockup** of the War Map — the central strategic view of the app. This is a design-first task. No real data. No API calls. No database. No state beyond local React state for selection and hover. The goal is to nail the look and feel before anything is wired up.
+## PHASE 1: LAYOUT & STRUCTURAL FOUNDATION
 
-This is Phase 2 of a six-phase redesign. Later phases will extract components, wire data, add interaction, and polish. You are building the disposable prototype that everything else will be based on. Treat it as a design study, not production code.
+### 1.1 Page Layout Restructure (`page.tsx`)
+- **Current**: 4-panel layout (TopHUD, Left Staff, Right AAR, Bottom Bar) over full-screen canvas
+- **Target**: 3-panel layout matching proof of concept:
+  - **Top Bar**: Campaign visualizer header with status badges (full width, ~60px)
+  - **Main Grid**: 3-column layout:
+    - Left: STAFF ROSTER (~300px, full height minus top/bottom bars)
+    - Center: 3D TACTICAL DISPLAY (flexible, takes remaining space)
+    - Right: DAILY OPERATIONS LOG (~380px, full height minus top/bottom bars)
+  - **Bottom Bar**: System status ticker (~40px, full width)
 
-## Non-negotiable rules before you touch anything
+### 1.2 CSS Grid Layout System
+```css
+.main-grid {
+  display: grid;
+  grid-template-rows: 60px 1fr 40px;
+  grid-template-columns: 300px 1fr 380px;
+  height: 100vh;
+  width: 100vw;
+}
+```
 
-1. BEFORE writing any code, inspect the current project structure. Read the existing app router layout, the global stylesheet, the Tailwind config, the shadcn/ui setup, the font configuration, and the current War Map implementation if one exists. Understand the existing conventions before adding anything.
-2. Produce a short written summary of what you found BEFORE writing code: the fonts already installed, the Tailwind theme tokens already defined, the existing color system, the existing component conventions. Flag any conflicts between the design spec below and what exists.
-3. Do NOT modify any existing pages, routes, components, or styles. Build the mockup as a completely isolated route at `/warmap-preview` with its own self-contained styles scoped to that route. If you need to add fonts or theme tokens, do so in a way that doesn't affect the rest of the app — prefer route-scoped CSS variables and a route-scoped font import over global changes.
-4. Do NOT wire anything to Prisma, the agents API, or any existing data source. Use hardcoded fake data defined inside the mockup route file.
-5. Do NOT touch the AI agent code, the chat route, the memory system, or the Telegram adapter. They are out of scope.
-6. Do NOT install new heavy dependencies. If you need an animation library, use Framer Motion only if it is already installed. If you need a canvas library, prefer plain canvas or SVG over adding a new package. If you absolutely must add a dependency, ask first and justify it.
-7. Verify the app builds and runs after every significant change. Do not leave the project in a broken state.
+---
 
-## The design direction
+## PHASE 2: TOP COMMAND BAR REDESIGN (`TopHUD.tsx` → `CampaignHeader.tsx`)
 
-The War Map is a **holographic tactical display**, not a webpage. The mental model is: the user is standing in front of a projected command table, and the entire view is what that projection looks like from their side. Everything on screen should feel like it is being rendered by a machine in-world, not drawn by a designer for a consumer.
+### 2.1 Visual Specification
+- **Background**: `rgba(5, 8, 16, 0.95)` with `backdrop-filter: blur(12px)`
+- **Border Bottom**: `1px solid rgba(77, 216, 232, 0.3)`
+- **Title**: "CAMPAIGN VISUALIZER — 3D TACTICAL DISPLAY" (Rajdhani 700, 0.85rem, letter-spacing 0.1em)
+- **Status Badges**: "ACTIVE" (green pulse), "SECURE" (cyan) - pill shaped with glow
+- **Right Side**: UTC timestamp, system stability, connection status
 
-The aesthetic is a fusion of three references:
-- **XCOM 2 Geoscape** — a strategic layer floating above a globe, region-based threat with color temperature, a sense of time passing, assets placed on regions rather than listed.
-- **Stellaris galaxy view** — spiral structure, hyperlanes between nodes, territory ownership, fog of war, sectors.
-- **Star Wars tactical displays** — monochrome base with one accent, scanlines and bloom, concentric rings and radial menus, stencil or monospace typography, a fleet/battle-group metaphor.
+### 2.2 Component Structure
+```tsx
+<CampaignHeader>
+  <HeaderLeft>
+    <StatusDot color="green" pulsing />
+    <Title>CAMPAIGN VISUALIZER — 3D TACTICAL DISPLAY</Title>
+  </HeaderLeft>
+  <HeaderCenter>
+    <StatusBadge variant="active">ACTIVE</StatusBadge>
+    <StatusBadge variant="secure">SECURE</StatusBadge>
+  </HeaderCenter>
+  <HeaderRight>
+    <UTCClock />
+    <SystemHealth />
+  </HeaderRight>
+</CampaignHeader>
+```
 
-The rule for every decision: if it feels like a consumer dashboard, it is wrong. If it feels like a targeting computer, it is right.
+---
 
-## Palette (hard limit, five colors)
+## PHASE 3: STAFF ROSTER PANEL REDESIGN (`StaffRosterPanel.tsx`)
 
-Use exactly these colors. No others. Derived shades are allowed only by adjusting opacity, never by introducing new hues.
+### 3.1 Visual Specification (Matching Proof of Concept)
+- **Panel Background**: `rgba(8, 12, 22, 0.9)` with `backdrop-filter: blur(16px)`, right border `1px solid rgba(77, 216, 232, 0.2)`
+- **Header**: "STAFF ROSTER" with cyan accent dot
+- **Staff Cards** (3 visible, matching proof):
+  1. **LOGISTICS: KAEL** - AI Logistics - ONLINE (green)
+  2. **STRATEGY: ZARA** - AI Tactical - DEEP FOCUS (amber)
+  3. **TRAINING: REX** - AI Training - STANDBY (cyan)
+- **Card Layout**:
+  - Avatar: 40px circle with role color gradient, initial
+  - Role Label: Small caps, role color (LOGISTICS/STRATEGY/TRAINING)
+  - Name: Large, white (KAEL/ZARA/REX)
+  - Status: Dot + label (ONLINE/DEEP FOCUS/STANDBY)
+  - Current Task: Text with progress bar
+  - Progress Bar: Thin, role-color gradient, animated flow
 
-- **Void** `#050810` — deep background, near-black with a hint of blue.
-- **Holo Cyan** `#4DD8E8` — primary UI lines, labels, neutral elements. This is the "ink."
-- **Progress Amber** `#FFB347` — active campaigns, in-progress, currently engaged.
-- **Conquest Green** `#3FE0A0` — completed, secured, conquered.
-- **Threat Red** `#FF4D5E` — at-risk, overdue, contested, failing.
+### 3.2 Data Updates
+```tsx
+const STAFF_ROSTER = [
+  { id: "staff-1", role: "LOGISTICS", name: "KAEL", subtitle: "AI Logistics", status: "ONLINE", currentTask: "Supply chain optimization", taskProgress: 78, avatarInitial: "K", roleColor: "#2ECC71" },
+  { id: "staff-2", role: "STRATEGY", name: "ZARA", subtitle: "AI Tactical", status: "DEEP FOCUS", currentTask: "Threat pattern recognition", taskProgress: 45, avatarInitial: "Z", roleColor: "#FFB347" },
+  { id: "staff-3", role: "TRAINING", name: "REX", subtitle: "AI Training", status: "STANDBY", currentTask: "Combat readiness drills", taskProgress: 12, avatarInitial: "R", roleColor: "#4DD8E8" },
+];
+```
 
-If the app already has a theme system, do NOT override it globally. Define these as route-scoped CSS variables inside the mockup route.
+---
 
-## Typography (two fonts maximum)
+## PHASE 4: 3D TACTICAL DISPLAY REDESIGN (`WarMap3DCanvasInner.tsx`)
 
-- **Display / labels:** a technical condensed sans or stencil. Prefer `Rajdhani`, `Orbitron`, `Chakra Petch`, or `Share Tech Mono` from Google Fonts. Use for headers, node labels, tactical readouts. All caps for labels.
-- **Body / data:** a clean monospace. Prefer `JetBrains Mono`, `IBM Plex Mono`, or fall back to the existing monospace font if one is already in the project. Use for any text longer than a label.
+### 4.1 Core Visual Changes (Matching Proof of Concept)
+**Three Primary Nodes as Large Glowing Spheres:**
+1. **TACTICAL PHYSICAL** (Conquered - Green) - Position: Left-back
+2. **DEPLOY WAR** (Active - Amber) - Position: Right-back
+3. **REACH CODEFORCES** (At-Risk - Red) - Position: Front-center
 
-Load these as route-scoped fonts if possible. If Next.js font optimization requires global loading, import them and use them only within the mockup route's class scope.
+**Node Design:**
+- Large sphere (radius ~25-30) with emissive material
+- Outer rotating ring showing progress (like Saturn)
+- Inner pulsing core
+- Label below with name and progress %
+- State color: Green (conquered), Amber (active), Red (at-risk)
 
-## Shape language
+**Connections:**
+- Curved bezier tubes between nodes (not flat lines)
+- Animated particle flow along tubes
+- Color matches source node state
 
-- Nodes are **hexagons**. Use SVG polygons or CSS clip-path, not a library.
-- Panels have **chamfered corners** — angled cuts at the corners, not rounded corners. Thin 1px borders. Occasional corner bracket accents (small L-shaped marks at panel corners) for technical feel.
-- Connections between nodes are **curved hyperlanes**, not straight lines. Use SVG quadratic or cubic bezier paths.
-- Every element has a **subtle outer glow**, never a drop shadow. Use `filter: drop-shadow()` with the element's own color at low opacity, or box-shadow with a colored spread.
-- No rounded corners anywhere except progress rings and circular UI elements.
+**Environment:**
+- Dark void background (`#050810`)
+- Subtle floor grid
+- Volumetric fog for depth
+- Bloom post-processing for glow
 
-## Motion grammar
+### 4.2 Camera & Controls
+- **Initial Position**: Elevated, slightly angled to show all three nodes
+- **OrbitControls**: Damping enabled, auto-rotate slow (0.15), constrained polar angle
+- **Focus**: Center of the three-node triangle
 
-Keep motion subtle and constant. The display should feel alive, never busy.
+### 4.3 Node Data Structure
+```tsx
+const TACTICAL_NODES = [
+  { id: "tactical-physical", name: "TACTICAL PHYSICAL", state: "conquered", progress: 100, position: [-80, 0, -60], color: 0x2ECC71 },
+  { id: "deploy-war", name: "DEPLOY WAR", state: "active", progress: 67, position: [60, 0, -40], color: 0xFFB347 },
+  { id: "reach-codeforces", name: "REACH CODEFORCES", state: "at-risk", progress: 23, position: [-10, 0, 70], color: 0xFF4D5E },
+];
+```
 
-- **Background:** a slowly rotating galaxy or starfield at very low opacity (10–15%). Should never compete with foreground content. Acceptable approaches: an SVG spiral with slow rotation, a canvas starfield with slow drift and parallax, or a very subtle animated gradient with noise. Choose the cheapest approach that looks good. No particles, no explosions, no flashes.
-- **Nodes:** pulse gently when active (a slow breathing animation, 3–4 second cycle), flicker briefly on hover, stay static when idle. Do not animate every node simultaneously in the same phase — offset the animation delays so the map feels organic.
-- **Hyperlanes:** animated dash flow along the direction of progress. Use SVG `stroke-dasharray` + `stroke-dashoffset` animation. Speed should indicate momentum — faster for recently active goals, slower or static for stalled ones.
-- **Transitions:** when selecting a node, the detail panel should appear with a scanline wipe or a holographic materialize effect, not a fade. When deselecting, reverse.
+---
 
-Do not add motion that isn't listed here without asking.
+## PHASE 5: DAILY OPERATIONS LOG PANEL (`OperationsAARPanel.tsx` → `DailyOpsLogPanel.tsx`)
 
-## Layout
+### 5.1 Visual Specification
+- **Panel Background**: Same glassmorphism as left panel
+- **Header**: "DAILY OPERATIONS LOG" with cyan accent dot
+- **Log Entries** (from proof of concept):
+  - Timestamp (HH:MM:SS)
+  - Category badge: PHYSICAL (green), ALGORITHMIC (amber), SYSTEMS (cyan)
+  - Message text
+  - Color-coded left border on each entry
 
-The viewport is divided into four zones:
+### 5.2 Log Data
+```tsx
+const INITIAL_LOGS = [
+  { time: "06:42:13", category: "PHYSICAL", message: "Morning PT complete - 5km run, 100 pullups", color: "#2ECC71" },
+  { time: "07:15:00", category: "ALGORITHMIC", message: "LeetCode Daily: Two Sum (Medium) - Solved in 12min", color: "#FFB347" },
+  { time: "08:00:45", category: "SYSTEMS", message: "Architecture review: Auth service migration to NextAuth v5", color: "#4DD8E8" },
+  { time: "09:30:22", category: "PHYSICAL", message: "Gym session: Push/Pull/Legs - Week 3 Day 2", color: "#2ECC71" },
+  { time: "11:15:00", category: "ALGORITHMIC", message: "Codeforces Round #892 - Rating change: +24", color: "#FFB347" },
+  { time: "14:00:00", category: "SYSTEMS", message: "Deploy War Room v2.3 to Vercel - Build passing", color: "#4DD8E8" },
+];
+```
 
-1. **Top bar (thin, ~48px).** Mission title on the left in display font all caps (e.g., "CAMPAIGN VISUALIZER — TACTICAL OVERVIEW"). On the right, a minimal status strip: a live clock, count of active fronts, count of conquered objectives. Everything in holo cyan, small, all caps.
-2. **Central map canvas.** Occupies the majority of the viewport. Contains the galaxy background, the nodes, the hyperlanes, the fog, the command center at the center, and the tactical readout in a corner. This is where the eye lives.
-3. **Right detail panel (~360px, collapsible).** Empty until a node is selected. When selected, slides in with the scanline transition and shows: node name, type, progress ring with percentage, list of milestones, list of recent log entries, and a placeholder for agent comms. All in holo cyan and amber. Chamfered corners, thin borders, corner brackets.
-4. **Bottom bar (thin, ~40px).** Tactical readout — a live-scrolling log of fake events rendered like a targeting computer feed ("14:22 — MILESTONE SECURED — 5K TIME"). Events fade as new ones appear. Keep the last 5–8 visible.
+---
 
-Add a legend in a corner of the map canvas: a small panel showing the five palette colors with their meanings. Interactive in a later phase; static for now.
+## PHASE 6: BOTTOM STATUS BAR (`BottomBar.tsx` → `SystemStatusBar.tsx`)
 
-## The map contents (fake data)
+### 6.1 Visual Specification
+- **Height**: 40px
+- **Background**: `rgba(5, 8, 16, 0.95)` with top border
+- **Left**: System status indicators (CPU, MEM, NET, GPU)
+- **Center**: Active operation status
+- **Right**: Version/build info, uptime
 
-Design the map to contain:
+---
 
-- **One command center node** at the center of the canvas. Larger than the others, distinct shape (maybe an octagon or a double hexagon), always pulse-active. This is "the user."
-- **Five to eight goal nodes** arranged in a rough spiral around the command center, as if they orbit it. Use a spiral layout, not a grid, not a circle. Stagger them so the map reads as organic, not mathematical.
-- **Hyperlanes** connecting each goal node back to the command center, and connecting some goal nodes to each other where they are related. Use curved paths. Animate flow toward the command center for completed goals and away from it for in-progress goals.
-- **Two to three of the goal nodes should be visually distinct:**
-  - One **conquered** — full conquest green, static, with a "CONQUERED" tag.
-  - One **in progress** — progress amber, pulsing, with a progress ring around the hexagon showing a percentage.
-  - One **at risk** — threat red, flickering intermittently, with a "CONTACT" or "AT RISK" tag.
-  - The rest are neutral holo cyan with small progress indicators.
-- **Fog of war** on two or three positions where future goals might go — dark regions with faint question marks or unknown markers. These are not interactive in this phase.
+## PHASE 7: 3D SCENE ENHANCEMENTS
 
-Fake the goal names with on-theme titles that fit the war-room framing without being silly. Examples: "TACTICAL PHYSICAL," "DEPLOY WAR," "REACH CODEFORCES," "MASTER SYSTEMS," "INTERNATIONAL MATH." Use these or invent similar ones. Keep them short.
+### 7.1 Node Component (`TacticalNode`)
+- **Sphere**: `SphereGeometry(28, 64, 64)` with `MeshPhysicalMaterial`
+  - Emissive color matching state
+  - Emissive intensity: 1.5 (conquered), 2.0 (active), 2.5 (at-risk)
+  - Transmission: 0.3, thickness: 0.5 for glass-like look
+- **Progress Ring**: `RingGeometry(32, 35, 128)` rotating, shows progress via arc
+- **Orbiting Particles**: Small spheres orbiting active/at-risk nodes
+- **Label**: HTML overlay or `Text` from drei
 
-## What to build, in this exact order
+### 7.2 Connection Tubes (`Hyperlane`)
+- **TubeGeometry** along QuadraticBezierCurve3
+- **MeshPhysicalMaterial** with emissive glow
+- **Animated flow**: Dashed line animation or particle system
 
-1. **Route scaffold.** Create the `/warmap-preview` route. Confirm it renders a blank page with the void background color.
-2. **Galaxy background.** Add the slowly rotating starfield or spiral galaxy at low opacity. Verify it looks good and stays out of the way. Do not proceed until this feels right — it sets the tone for everything else.
-3. **Layout skeleton.** Add the four-zone layout (top bar, map canvas, right panel space, bottom bar) with placeholder text in each zone. Confirm the proportions feel right at typical viewport sizes.
-4. **Node primitives.** Build a single hexagon node component with SVG. Give it a label, a progress ring, and a state prop (neutral, active, conquered, at-risk). Render one of each state in a row on the canvas to check the visual language.
-5. **Position nodes on the spiral.** Replace the test row with the real spiral layout. Add the command center at the center. Verify positions look organic.
-6. **Hyperlanes.** Draw curved SVG paths between nodes. Add the animated dash flow. Tune the curve control points so paths don't cross awkwardly.
-7. **Fog of war.** Add two or three fogged positions with faint markers.
-8. **Legend.** Add the legend panel in a corner of the canvas.
-9. **Selection interaction.** Clicking a node should open the right detail panel with the scanline transition. Clicking empty space closes it. Local React state only.
-10. **Detail panel contents.** Fill the detail panel with the node name, progress ring, fake milestone list, and fake log entries. Use the display and monospace fonts correctly.
-11. **Top bar and bottom bar.** Fill them with the described content — mission title, clock, counts, tactical readout feed. Fake events can be static or cycle through a small array with a timer.
-12. **Polish pass.** Tune glows, animation timings, font sizes, and spacing. This is where you make it feel premium rather than functional.
+### 7.3 Post-Processing (`WarMap3DCanvas.tsx`)
+- **Bloom**: threshold 0.6, intensity 1.2, radius 0.8
+- **ToneMapping**: ACESFilmic, exposure 1.6
+- **Vignette**: Subtle
 
-## What NOT to build in this phase
+---
 
-- No real data from Prisma or any API.
-- No agent comms integration — a placeholder panel is fine.
-- No radial menus (that is Phase 5).
-- No sound (that is Phase 6).
-- No time scrubbing (that is Phase 5).
-- No mobile layout. Desktop only for this mockup. Mobile is a later concern.
-- No accessibility polish. This is a visual prototype; accessibility comes when it is extracted into production components.
+## PHASE 8: TYPOGRAPHY & DESIGN TOKENS
 
-## What to report back
+### 8.1 Font Usage
+- **Display (Headers, Titles)**: Rajdhani 600/700
+- **Mono (Data, Timestamps, Code)**: JetBrains Mono 400/600
 
-When done, report:
+### 8.2 Color Palette (CSS Variables)
+```css
+:root {
+  --void: #050810;
+  --void-elevated: #080c16;
+  --holo-cyan: #4DD8E8;
+  --holo-cyan-glow: rgba(77, 216, 232, 0.4);
+  --progress-amber: #FFB347;
+  --progress-amber-glow: rgba(255, 179, 71, 0.4);
+  --conquest-green: #2ECC71;
+  --conquest-green-glow: rgba(46, 204, 113, 0.4);
+  --threat-red: #FF4D5E;
+  --threat-red-glow: rgba(255, 77, 94, 0.4);
+  --text-primary: #E8EEF4;
+  --text-secondary: #8B9CB3;
+  --text-muted: #5A6B7D;
+  --panel-bg: rgba(8, 12, 22, 0.9);
+  --panel-border: rgba(77, 216, 232, 0.2);
+  --glass-blur: blur(16px);
+}
+```
 
-- The exact route to view the mockup (`/warmap-preview`).
-- Which fonts you used and how you loaded them.
-- Which technique you used for the galaxy background and why.
-- Any dependencies you added, with justification.
-- Any place where the design spec was ambiguous and what you chose.
-- Anything you could not do or that contradicts this prompt.
-- A short list of the things you think look weakest, so the user knows where to focus iteration.
+---
 
-Do not declare the task complete until the mockup looks like a coherent piece of a sci-fi tactical display, not a React page with hexagons on it. If it looks like a dashboard, it is wrong. If it looks like a targeting computer, it is right.
+## PHASE 9: RESPONSIVE BEHAVIOR
+
+### 9.1 Breakpoints
+- **Desktop (≥1400px)**: Full 3-column layout
+- **Tablet (1024-1399px)**: Compressed side panels (260px / 320px)
+- **Mobile (<1024px)**: Stacked layout - Header, 3D Canvas (50vh), Staff + Log accordion, Footer
+
+---
+
+## EXECUTION ORDER
+
+1. **Phase 1-2**: Layout restructuring + CampaignHeader (new component)
+2. **Phase 3**: StaffRosterPanel redesign
+3. **Phase 4**: 3D Tactical Display core (nodes, connections, camera)
+4. **Phase 5**: DailyOpsLogPanel redesign
+5. **Phase 6**: SystemStatusBar redesign
+6. **Phase 7**: 3D scene polish (materials, post-processing, animations)
+7. **Phase 8**: Global design tokens & typography
+8. **Phase 9**: Responsive adjustments
+
+---
+
+## FILES TO CREATE/MODIFY
+
+| File | Action |
+|------|--------|
+| `page.tsx` | **REWRITE** - New grid layout |
+| `CampaignHeader.tsx` | **CREATE** - New top bar component |
+| `TopHUD.tsx` | **DELETE** - Replaced by CampaignHeader |
+| `StaffRosterPanel.tsx` | **REWRITE** - Match proof of concept |
+| `WarMap3DCanvas.tsx` | **UPDATE** - Post-processing, camera |
+| `WarMap3DCanvasInner.tsx` | **REWRITE** - Three-node tactical display |
+| `OperationsAARPanel.tsx` | **DELETE** - Replaced by DailyOpsLogPanel |
+| `DailyOpsLogPanel.tsx` | **CREATE** - New right panel |
+| `BottomBar.tsx` | **REWRITE** → `SystemStatusBar.tsx` |
+| `globals.css` / new `tactical.css` | **CREATE** - Design tokens |
+
+---
+
+## SUCCESS CRITERIA
+
+- [ ] Visual match to proof of concept ≥ 90%
+- [ ] All UI panels functional (hover, click, scroll)
+- [ ] 3D scene runs at 60fps on modern hardware
+- [ ] TypeScript strict mode passes
+- [ ] No console errors/warnings
+- [ ] Responsive down to 1024px width

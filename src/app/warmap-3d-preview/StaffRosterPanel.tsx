@@ -5,98 +5,100 @@ import { useWarMapStore } from "./WarMap3DCanvas";
 
 interface StaffMember {
   id: string;
-  name: string;
   role: string;
+  name: string;
+  subtitle: string;
   status: "ONLINE" | "DEEP FOCUS" | "STANDBY";
   currentTask: string;
   taskProgress: number;
   avatarInitial: string;
+  roleColor: string;
 }
 
 const STAFF_ROSTER: StaffMember[] = [
-  { id: "staff-1", name: "Kael", role: "Logistics & Infrastructure", status: "ONLINE", currentTask: "Supply chain optimization", taskProgress: 78, avatarInitial: "K" },
-  { id: "staff-2", name: "Zara", role: "Strategic Analysis", status: "DEEP FOCUS", currentTask: "Threat pattern recognition", taskProgress: 45, avatarInitial: "Z" },
-  { id: "staff-3", name: "Rex", role: "Tactical Training", status: "STANDBY", currentTask: "Combat readiness drills", taskProgress: 12, avatarInitial: "R" },
-  { id: "staff-4", name: "Vex", role: "Cyber Operations", status: "ONLINE", currentTask: "Network penetration testing", taskProgress: 63, avatarInitial: "V" },
-  { id: "staff-5", name: "Mira", role: "Intelligence & Recon", status: "DEEP FOCUS", currentTask: "Sector 7 signal analysis", taskProgress: 89, avatarInitial: "M" },
+  { id: "staff-1", role: "LOGISTICS", name: "KAEL", subtitle: "AI Logistics", status: "ONLINE", currentTask: "Supply chain optimization", taskProgress: 78, avatarInitial: "K", roleColor: "#2ECC71" },
+  { id: "staff-2", role: "STRATEGY", name: "ZARA", subtitle: "AI Tactical", status: "DEEP FOCUS", currentTask: "Threat pattern recognition", taskProgress: 45, avatarInitial: "Z", roleColor: "#FFB347" },
+  { id: "staff-3", role: "TRAINING", name: "REX", subtitle: "AI Training", status: "STANDBY", currentTask: "Combat readiness drills", taskProgress: 12, avatarInitial: "R", roleColor: "#4DD8E8" },
 ];
 
 const statusConfig = {
-  ONLINE: { color: "#2ECC71", glow: "0 0 8px #2ECC71, 0 0 16px #2ECC71" },
-  "DEEP FOCUS": { color: "#FFB347", glow: "0 0 8px #FFB347, 0 0 16px #FFB347" },
-  STANDBY: { color: "#4DD8E8", glow: "0 0 8px #4DD8E8, 0 0 16px #4DD8E8" },
+  ONLINE: { label: "ONLINE", color: "#2ECC71", glow: "0 0 8px #2ECC71, 0 0 16px #2ECC71" },
+  "DEEP FOCUS": { label: "DEEP FOCUS", color: "#FFB347", glow: "0 0 8px #FFB347, 0 0 16px #FFB347" },
+  STANDBY: { label: "STANDBY", color: "#4DD8E8", glow: "0 0 8px #4DD8E8, 0 0 16px #4DD8E8" },
 } as const;
 
-export function StaffRosterPanel() {
-  // FIX: Select values individually to maintain stable references and prevent infinite render loops
-  const selectedNodeId = useWarMapStore((s) => s.selectedNodeId);
-  const setSelectedNode = useWarMapStore((s) => s.setSelectedNode);
-  const setHoveredNode = useWarMapStore((s) => s.setHoveredNode);
+// Global styles injected once
+if (typeof window !== "undefined" && !window.__STAFF_ROSTER_STYLES_INJECTED__) {
+  window.__STAFF_ROSTER_STYLES_INJECTED__ = true;
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    @keyframes progress-flow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
+export function StaffRosterPanel() {
+  const { selectedNodeId, setSelectedNode, setHoveredNode } = useWarMapStore(
+    (s) => ({ selectedNodeId: s.selectedNodeId, setSelectedNode: s.setSelectedNode, setHoveredNode: s.setHoveredNode })
+  );
   const [hoveredStaff, setHoveredStaff] = React.useState<string | null>(null);
 
-  const onlineCount = STAFF_ROSTER.filter(s => s.status === "ONLINE").length;
-  const focusCount = STAFF_ROSTER.filter(s => s.status === "DEEP FOCUS").length;
-  const standbyCount = STAFF_ROSTER.filter(s => s.status === "STANDBY").length;
-
   return (
-    <div
+    <aside
       style={{
         position: "fixed",
-        top: "80px",
-        left: "20px",
-        bottom: "56px",
-        width: "340px",
+        top: "60px",
+        left: 0,
+        bottom: "40px",
+        width: "300px",
         zIndex: 20,
         pointerEvents: "auto",
         display: "flex",
         flexDirection: "column",
         background: "rgba(8, 12, 22, 0.9)",
         backdropFilter: "blur(16px)",
-        border: "1px solid rgba(77, 216, 232, 0.25)",
-        borderRadius: "8px",
-        padding: "16px",
+        borderRight: "1px solid rgba(77, 216, 232, 0.2)",
         fontFamily: "var(--wm-font-mono)",
-        color: "#4DD8E8",
+        color: "#E8EEF4",
         overflow: "hidden",
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(77, 216, 232, 0.1)",
+        boxShadow: "8px 0 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(77, 216, 232, 0.05)",
       }}
     >
       {/* Header */}
       <div style={{
-        padding: "0 4px 16px",
-        borderBottom: "1px solid rgba(77, 216, 232, 0.2)",
-        marginBottom: "16px",
+        padding: "16px 20px",
+        borderBottom: "1px solid rgba(77, 216, 232, 0.15)",
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
       }}>
+        <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#4DD8E8", boxShadow: "0 0 10px #4DD8E8" }} />
         <div style={{
           fontFamily: "var(--wm-font-display)",
-          fontSize: "0.7rem",
+          fontSize: "0.65rem",
           fontWeight: 700,
           letterSpacing: "0.1em",
           textTransform: "uppercase",
           color: "#4DD8E8",
           textShadow: "0 0 8px #4DD8E8",
         }}>
-          AI PERSONNEL // TACTICAL ROSTER
+          STAFF ROSTER
         </div>
-        <div style={{ display: "flex", gap: "12px", marginTop: "12px", fontSize: "0.6rem" }}>
-          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#2ECC71" }} />
-            <span>{onlineCount} ONLINE</span>
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#FFB347" }} />
-            <span>{focusCount} FOCUS</span>
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4DD8E8" }} />
-            <span>{standbyCount} STANDBY</span>
-          </span>
+        <div style={{ flex: 1 }} />
+        <div style={{ fontSize: "0.55rem", opacity: 0.5, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          {STAFF_ROSTER.length} OPERATIVES
         </div>
       </div>
 
       {/* Staff Cards */}
-      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "14px" }}>
         {STAFF_ROSTER.map((staff) => {
           const config = statusConfig[staff.status];
           const isHovered = hoveredStaff === staff.id;
@@ -107,34 +109,35 @@ export function StaffRosterPanel() {
               onMouseEnter={() => setHoveredStaff(staff.id)}
               onMouseLeave={() => setHoveredStaff(null)}
               style={{
-                background: isHovered ? "rgba(77, 216, 232, 0.1)" : "rgba(5, 8, 16, 0.6)",
-                border: `1px solid ${isHovered ? "rgba(77, 216, 232, 0.5)" : "rgba(77, 216, 232, 0.2)"}`,
-                borderRadius: "6px",
-                padding: "12px",
+                background: isHovered ? "rgba(77, 216, 232, 0.08)" : "rgba(5, 8, 16, 0.5)",
+                border: `1px solid ${isHovered ? "rgba(77, 216, 232, 0.4)" : "rgba(77, 216, 232, 0.15)"}`,
+                borderLeft: `3px solid ${staff.roleColor}`,
+                borderRadius: "0 8px 8px 0",
+                padding: "14px",
                 transition: "all 0.2s ease",
                 cursor: "pointer",
-                boxShadow: isHovered ? `0 0 20px ${config.color}40` : "none",
+                boxShadow: isHovered ? `0 0 24px ${staff.roleColor}20` : "none",
               }}
             >
               <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
                 {/* Avatar */}
                 <div
                   style={{
-                    width: "40px",
-                    height: "40px",
+                    width: "44px",
+                    height: "44px",
                     borderRadius: "50%",
-                    background: `linear-gradient(135deg, ${config.color}30, ${config.color}10)`,
-                    border: `1px solid ${config.color}`,
+                    background: `linear-gradient(135deg, ${staff.roleColor}30, ${staff.roleColor}05)`,
+                    border: `1px solid ${staff.roleColor}60`,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontFamily: "var(--wm-font-display)",
-                    fontSize: "1rem",
+                    fontSize: "1.1rem",
                     fontWeight: 700,
-                    color: config.color,
-                    textShadow: `0 0 8px ${config.color}`,
+                    color: staff.roleColor,
+                    textShadow: `0 0 8px ${staff.roleColor}`,
                     flexShrink: 0,
-                    boxShadow: `inset 0 0 16px ${config.color}20, 0 0 8px ${config.color}40`,
+                    boxShadow: `inset 0 0 16px ${staff.roleColor}20, 0 0 12px ${staff.roleColor}30`,
                   }}
                 >
                   {staff.avatarInitial}
@@ -142,67 +145,85 @@ export function StaffRosterPanel() {
 
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                    <div style={{
-                      fontFamily: "var(--wm-font-display)",
-                      fontSize: "0.8rem",
-                      fontWeight: 700,
-                      letterSpacing: "0.05em",
-                      textTransform: "uppercase",
-                      color: "#4DD8E8",
-                    }}>
-                      {staff.name}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.5rem",
-                        fontWeight: 600,
-                        padding: "2px 8px",
-                        borderRadius: "3px",
-                        background: `${config.color}20`,
-                        border: `1px solid ${config.color}`,
-                        color: config.color,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {staff.status}
-                    </div>
-                  </div>
+                  {/* Role Label */}
                   <div style={{
-                    fontSize: "0.6rem",
-                    color: "rgba(77, 216, 232, 0.7)",
+                    fontFamily: "var(--wm-font-display)",
+                    fontSize: "0.5rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.15em",
                     textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    marginBottom: "8px",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
+                    color: staff.roleColor,
+                    marginBottom: "2px",
                   }}>
                     {staff.role}
                   </div>
-
-                  {/* Task Progress */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <div style={{ flex: 1, height: "4px", background: "rgba(77, 216, 232, 0.1)", borderRadius: "2px", overflow: "hidden" }}>
+                  {/* Name */}
+                  <div style={{
+                    fontFamily: "var(--wm-font-display)",
+                    fontSize: "0.9rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.02em",
+                    color: "#FFFFFF",
+                    marginBottom: "1px",
+                  }}>
+                    {staff.name}
+                  </div>
+                  {/* Subtitle */}
+                  <div style={{
+                    fontSize: "0.55rem",
+                    opacity: 0.6,
+                    color: "#8B9CB3",
+                    marginBottom: "8px",
+                  }}>
+                    {staff.subtitle}
+                  </div>
+                  {/* Status */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                    <span
+                      style={{
+                        width: "7px",
+                        height: "7px",
+                        borderRadius: "50%",
+                        background: config.color,
+                        boxShadow: config.glow,
+                        animation: config.status === "ONLINE" ? "pulse-dot 1.5s ease-in-out infinite" : "none",
+                      }}
+                    />
+                    <span style={{
+                      fontFamily: "var(--wm-font-display)",
+                      fontSize: "0.55rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: config.color,
+                    }}>
+                      {config.label}
+                    </span>
+                  </div>
+                  {/* Current Task with Progress */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "0.6rem", opacity: 0.8, color: "#CBD5E1" }}>
+                        {staff.currentTask}
+                      </span>
+                      <span style={{ fontSize: "0.6rem", fontWeight: 600, fontFamily: "var(--wm-font-mono)", color: staff.roleColor }}>
+                        {staff.taskProgress}%
+                      </span>
+                    </div>
+                    <div style={{ height: "3px", background: "rgba(77, 216, 232, 0.1)", borderRadius: "2px", overflow: "hidden" }}>
                       <div
                         style={{
                           width: `${staff.taskProgress}%`,
                           height: "100%",
-                          background: `linear-gradient(90deg, ${config.color}, ${config.color}80)`,
+                          background: `linear-gradient(90deg, ${staff.roleColor}, ${staff.roleColor}80)`,
                           borderRadius: "2px",
-                          boxShadow: `0 0 8px ${config.color}`,
-                          transition: "width 0.3s ease",
+                          boxShadow: `0 0 8px ${staff.roleColor}`,
+                          backgroundSize: "200% 100%",
+                          animation: "progress-flow 2s linear infinite",
+                          transition: "width 0.5s ease-out",
                         }}
                       />
                     </div>
-                    <span style={{ fontSize: "0.6rem", fontWeight: 600, color: config.color, minWidth: "36px", textAlign: "right" }}>
-                      {staff.taskProgress}%
-                    </span>
-                  </div>
-                  <div style={{ fontSize: "0.55rem", color: "rgba(77, 216, 232, 0.5)", marginTop: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {staff.currentTask}
                   </div>
                 </div>
               </div>
@@ -210,6 +231,6 @@ export function StaffRosterPanel() {
           );
         })}
       </div>
-    </div>
+    </aside>
   );
 }

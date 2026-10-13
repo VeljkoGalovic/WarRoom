@@ -202,36 +202,26 @@ export const useWarMapStore = create<WarMapState>((set) => ({
 export function WarMap3DCanvas() {
   return (
     <Canvas
-      camera={{ position: [0, 200, 500], fov: 50 }}
+      camera={{ position: [0, 150, 350], fov: 45 }}
       style={{ width: "100%", height: "100%", position: "fixed", top: 0, left: 0 }}
       onCreated={({ gl }) => {
         gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.5;
+        gl.toneMappingExposure = 1.6;
       }}
     >
-      <OrbitControls
-        enableDamping
-        dampingFactor={0.05}
-        autoRotate
-        autoRotateSpeed={0.3}
-        enablePan={false}
-        minDistance={100}
-        maxDistance={800}
-        minPolarAngle={0.1}
-        maxPolarAngle={Math.PI / 2 - 0.05}
-      />
+      {/* No OrbitControls - we use cinematic camera controller in Inner */}
       <Suspense fallback={null}>
         <EffectComposer multisampling={8}>
           <Bloom
-            luminanceThreshold={0.7}
-            intensity={1.0}
-            kernelSize={2.0}
+            luminanceThreshold={0.6}
+            intensity={1.2}
+            radius={0.8}
           />
           <Vignette
             eskil={false}
-            offset={0.35}
-            darkness={0.45}
+            offset={0.4}
+            darkness={0.5}
           />
           <WarMap3DCanvasInner />
         </EffectComposer>

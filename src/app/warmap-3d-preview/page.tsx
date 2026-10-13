@@ -3,10 +3,10 @@
 import { Rajdhani, JetBrains_Mono } from "next/font/google";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import { TopHUD } from "./TopHUD";
+import { CampaignHeader } from "./CampaignHeader";
 import { StaffRosterPanel } from "./StaffRosterPanel";
-import { OperationsAARPanel } from "./OperationsAARPanel";
-import { BottomBar } from "./BottomBar";
+import { DailyOpsLogPanel } from "./DailyOpsLogPanel";
+import { SystemStatusBar } from "./SystemStatusBar";
 
 // Route-scoped fonts
 const rajdhani = Rajdhani({
@@ -62,26 +62,33 @@ export default function WarMap3DPreviewPage() {
       {/* Layer 0: Full-screen R3F Canvas */}
       <WarMap3DCanvas />
 
-      {/* Layer 10: Pointer-events-none container for UI panels */}
+      {/* Layer 10: UI Panels Container */}
       <div
         style={{
           position: "fixed",
           inset: 0,
           pointerEvents: "none",
           zIndex: 10,
+          display: "grid",
+          gridTemplateRows: "60px 1fr 40px",
+          gridTemplateColumns: "300px 1fr 380px",
+          height: "100vh",
+          width: "100vw",
         }}
       >
-        {/* Top Command HUD - Layer 20 */}
-        <TopHUD />
+        {/* Top: Campaign Header - Layer 20 */}
+        <CampaignHeader style={{ pointerEvents: "auto" }} />
 
-        {/* Left Staff Roster Panel - Layer 20 */}
-        <StaffRosterPanel />
+        {/* Left: Staff Roster - Layer 20 */}
+        <StaffRosterPanel style={{ pointerEvents: "auto" }} />
 
-        {/* Right Operations Briefing & AAR Panel - Layer 20 */}
-        <OperationsAARPanel />
+        {/* Center: 3D Tactical Display (Canvas handles this) */}
 
-        {/* Bottom Ticker Bar - Layer 20 */}
-        <BottomBar />
+        {/* Right: Daily Operations Log - Layer 20 */}
+        <DailyOpsLogPanel style={{ pointerEvents: "auto" }} />
+
+        {/* Bottom: System Status Bar - Layer 30 */}
+        <SystemStatusBar style={{ pointerEvents: "auto", gridColumn: "1 / -1" }} />
       </div>
     </main>
   );
