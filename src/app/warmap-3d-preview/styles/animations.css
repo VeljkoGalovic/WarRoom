@@ -1,0 +1,34 @@
+/**
+ * Shared Animations - Used by 2+ components
+ * Imported once in page.tsx (route entry)
+ */
+
+/* Corner pulse - used by CampaignHeader, SystemStatusBar, StaffRosterPanel, DailyOpsLogPanel */
+@keyframes corner-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Pulse dot - used by CampaignHeader, StaffRosterPanel, SystemStatusBar */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* Progress flow - used by CampaignHeader, StaffRosterPanel */
+@keyframes progress-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* Scan line - used by CampaignHeader, DailyOpsLogPanel */
+@keyframes scan-line {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Pulse - used by OperationsAARPanel, TopHUD */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

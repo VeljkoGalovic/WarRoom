@@ -1,0 +1,217 @@
+/**
+ * CampaignHeader Component Styles
+ * Shared keyframes imported from styles/animations.css
+ */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  z-index: 30;
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 300px 1fr 380px;
+  align-items: center;
+  padding: 0 20px;
+  background: linear-gradient(180deg, rgba(5, 8, 16, 0.85) 0%, rgba(5, 8, 16, 0.4) 100%);
+  backdrop-filter: blur(20px) saturate(150%);
+  border-bottom: 1px solid rgba(77, 216, 232, 0.25);
+  box-shadow:
+    0 4px 32px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(77, 216, 232, 0.08),
+    inset 0 -1px 0 rgba(77, 216, 232, 0.05);
+  font-family: var(--wm-font-mono);
+  transform: translateZ(0);
+  will-change: transform;
+  isolation: isolate;
+}
+
+.cornerNotch {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  animation: corner-pulse 3s ease-in-out infinite;
+}
+
+.cornerNotchTopLeft {
+  top: 0;
+  left: 0;
+  border-top: 1px solid rgba(77, 216, 232, 0.4);
+  border-left: 1px solid rgba(77, 216, 232, 0.4);
+}
+
+.cornerNotchBottomLeft {
+  bottom: 0;
+  left: 0;
+  border-bottom: 1px solid rgba(77, 216, 232, 0.4);
+  border-left: 1px solid rgba(77, 216, 232, 0.4);
+  animation-delay: 0.5s;
+}
+
+.cornerNotchTopRight {
+  top: 0;
+  right: 0;
+  border-top: 1px solid rgba(77, 216, 232, 0.4);
+  border-right: 1px solid rgba(77, 216, 232, 0.4);
+  animation-delay: 0.25s;
+}
+
+.cornerNotchBottomRight {
+  bottom: 0;
+  right: 0;
+  border-bottom: 1px solid rgba(77, 216, 232, 0.4);
+  border-right: 1px solid rgba(77, 216, 232, 0.4);
+  animation-delay: 0.75s;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-left: 8px;
+}
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ECC71;
+  box-shadow: 0 0 8px #2ECC71, 0 0 16px #2ECC71;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.statusText {
+  font-family: var(--wm-font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #2ECC71;
+  text-shadow: 0 0 8px #2ECC71;
+}
+
+.titleBlock {
+  border-left: 1px solid rgba(77, 216, 232, 0.2);
+  padding-left: 16px;
+}
+
+.mainTitle {
+  font-family: var(--wm-font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #E2E8F0;
+  line-height: 1.1;
+}
+
+.subTitle {
+  font-family: var(--wm-font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4DD8E8;
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+.centerSection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+}
+
+.statusPill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(77, 216, 232, 0.08);
+  border: 1px solid rgba(77, 216, 232, 0.2);
+  border-radius: 4px;
+  font-family: var(--wm-font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+}
+
+.statusPillLabel {
+  color: #4DD8E8;
+}
+
+.statusPillValue {
+  color: #2ECC71;
+}
+
+.timeDisplay {
+  font-family: var(--wm-font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: #E2E8F0;
+  font-variant-numeric: tabular-nums;
+}
+
+.timePlaceholder {
+  opacity: 0.5;
+}
+
+.rightSection {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  padding-right: 8px;
+}
+
+.connectionPill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(77, 216, 232, 0.06);
+  border: 1px solid rgba(77, 216, 232, 0.15);
+  border-radius: 4px;
+}
+
+.connectionDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4DD8E8;
+  box-shadow: 0 0 6px #4DD8E8;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+.connectionText {
+  font-family: var(--wm-font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.05em;
+  color: #4DD8E8;
+}
+
+.versionText {
+  font-family: var(--wm-font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: rgba(77, 216, 232, 0.5);
+}
+
+.scanLine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(77, 216, 232, 0.6), transparent);
+  animation: scan-line 4s linear infinite;
+  pointer-events: none;
+}

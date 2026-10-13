@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Canvas } from "@react-three/fiber";
 import { EffectComposer, Bloom, Vignette, ChromaticAberration, Noise } from "@react-three/postprocessing";
+import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
@@ -175,9 +176,12 @@ function SceneLighting() {
 // ============================================================================
 
 export function WarMap3DCanvas() {
+  // Tactical node cluster centroid (calculated from TACTICAL_NODES positions)
+  const TARGET_CENTER = [-10, 0, -10];
+
   return (
     <Canvas
-      camera={{ position: [0, 150, 350], fov: 45 }}
+      camera={{ position: [0, 25, 45], fov: 60, near: 0.5, far: 1000 }}
       style={{ width: "100%", height: "100%", position: "fixed", top: 0, left: 0 }}
       onCreated={({ gl }) => {
         gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -188,6 +192,23 @@ export function WarMap3DCanvas() {
     >
       {/* Scene Lighting */}
       <SceneLighting />
+
+      {/* Orbit Controls - smooth camera navigation calibrated to scene scale */}
+      <OrbitControls
+        makeDefault={true}
+        enableDamping={true}
+        dampingFactor={0.04}
+        enableRotate={true}
+        target={TARGET_CENTER}
+        minDistance={10}
+        maxDistance={250}
+        zoomSpeed={0.8}
+        rotateSpeed={0.6}
+        panSpeed={0.8}
+        maxPolarAngle={Math.PI / 2 - 0.05}
+        enablePan={true}
+        minPolarAngle={0}
+      />
 
       {/* Post-processing stack */}
       <Suspense fallback={null}>

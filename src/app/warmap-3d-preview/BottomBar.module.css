@@ -1,0 +1,86 @@
+/**
+ * BottomBar Component Styles - Refined for Glassmorphism HUD
+ * Local keyframes: slideIn (only used here)
+ */
+
+@keyframes slideIn {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.container {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 8px 20px;
+  background: rgba(3, 7, 18, 0.35);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(77, 216, 232, 0.18);
+  border-radius: 9999px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(77, 216, 232, 0.05) inset,
+    0 1px 0 rgba(77, 216, 232, 0.08) inset;
+  font-family: var(--wm-font-mono);
+  font-size: 0.55rem;
+  color: #4DD8E8;
+  letter-spacing: 0.03em;
+  transform: translateX(-50%) translateZ(0);
+  will-change: transform;
+  isolation: isolate;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.logEntry {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 2px 0;
+  white-space: nowrap;
+  opacity: 1;
+  animation: slideIn 0.3s ease-out;
+}
+
+.logTime {
+  opacity: 0.5;
+  font-family: var(--wm-font-display);
+  font-size: 0.5rem;
+  min-width: 44px;
+  letter-spacing: 0.05em;
+}
+
+.logEvent {
+  color: #FFB347;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 100px;
+  font-size: 0.5rem;
+}
+
+.logDetail {
+  opacity: 0.75;
+  flex: 1;
+  font-size: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logCategory {
+  font-size: 0.42rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid currentColor;
+  background: rgba(77, 216, 232, 0.08);
+}

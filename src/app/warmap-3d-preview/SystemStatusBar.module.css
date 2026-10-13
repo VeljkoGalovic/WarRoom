@@ -1,0 +1,231 @@
+/**
+ * SystemStatusBar Component Styles
+ * Shared keyframes imported from styles/animations.css
+ * Local keyframes: marquee, bar-pulse (only used here)
+ */
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes bar-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  z-index: 30;
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 300px 1fr 380px;
+  grid-column: 1 / -1;
+  align-items: center;
+  padding: 0 20px;
+  background: linear-gradient(0deg, rgba(5, 8, 16, 0.9) 0%, rgba(5, 8, 16, 0.5) 100%);
+  backdrop-filter: blur(20px) saturate(150%);
+  border-top: 1px solid rgba(77, 216, 232, 0.2);
+  box-shadow:
+    0 -4px 32px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(77, 216, 232, 0.08),
+    inset 0 -1px 0 rgba(77, 216, 232, 0.05);
+  font-family: var(--wm-font-mono);
+  transform: translateZ(0);
+  will-change: transform;
+  isolation: isolate;
+}
+
+.cornerNotch {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  animation: corner-pulse 3s ease-in-out infinite;
+}
+
+.cornerNotchTopLeft {
+  top: 0;
+  left: 0;
+  border-top: 1px solid rgba(77, 216, 232, 0.35);
+  border-left: 1px solid rgba(77, 216, 232, 0.35);
+}
+
+.cornerNotchBottomLeft {
+  bottom: 0;
+  left: 0;
+  border-bottom: 1px solid rgba(77, 216, 232, 0.35);
+  border-left: 1px solid rgba(77, 216, 232, 0.35);
+  animation-delay: 1.5s;
+}
+
+.cornerNotchTopRight {
+  top: 0;
+  right: 0;
+  border-top: 1px solid rgba(77, 216, 232, 0.35);
+  border-right: 1px solid rgba(77, 216, 232, 0.35);
+  animation-delay: 0.75s;
+}
+
+.cornerNotchBottomRight {
+  bottom: 0;
+  right: 0;
+  border-bottom: 1px solid rgba(77, 216, 232, 0.35);
+  border-right: 1px solid rgba(77, 216, 232, 0.35);
+  animation-delay: 2.25s;
+}
+
+.metricsPanel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-left: 8px;
+}
+
+.metricItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(77, 216, 232, 0.04);
+  border: 1px solid rgba(77, 216, 232, 0.1);
+  border-radius: 3px;
+}
+
+.metricLabelWrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metricLabel {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.metricDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+
+.metricValueWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metricValue {
+  font-family: var(--wm-font-mono);
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #E2E8F0;
+  min-width: 36px;
+  text-align: right;
+}
+
+.metricUnit {
+  font-size: 0.5rem;
+  color: rgba(77, 216, 232, 0.6);
+}
+
+.centerPanel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+}
+
+.uptimePill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(77, 216, 232, 0.06);
+  border: 1px solid rgba(77, 216, 232, 0.15);
+  border-radius: 3px;
+}
+
+.uptimeLabel {
+  font-family: var(--wm-font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: #4DD8E8;
+}
+
+.uptimeDisplay {
+  font-family: var(--wm-font-mono);
+  font-size: 0.55rem;
+  font-variant-numeric: tabular-nums;
+  color: #E2E8F0;
+}
+
+.uptimePlaceholder {
+  opacity: 0.5;
+}
+
+.latestLog {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: rgba(77, 216, 232, 0.04);
+  border: 1px solid rgba(77, 216, 232, 0.1);
+  border-radius: 3px;
+  max-width: 400px;
+  overflow: hidden;
+}
+
+.latestLogTime {
+  font-family: var(--wm-font-mono);
+  font-size: 0.55rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(77, 216, 232, 0.7);
+  white-space: nowrap;
+}
+
+.latestLogEvent {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.latestLogDetail {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.latestLogMessage {
+  font-family: var(--wm-font-mono);
+  font-size: 0.55rem;
+  color: #E2E8F0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.versionInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 8px;
+}
+
+.versionText {
+  font-family: var(--wm-font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: rgba(77, 216, 232, 0.5);
+}

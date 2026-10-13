@@ -91,6 +91,7 @@ function InfiniteGrid() {
       sectionColor="#0f3844"
       sectionSize={200}
       sectionThickness={1}
+      raycast={() => {}}
     />
   );
 }
@@ -169,7 +170,7 @@ function AmbientParticles() {
     }
   });
 
-  return <points ref={particlesRef} geometry={particleGeometry} material={particleMaterial} />;
+  return <points ref={particlesRef} geometry={particleGeometry} material={particleMaterial} raycast={() => {}} />;
 }
 
 // ============================================================================
@@ -218,7 +219,7 @@ function Hyperlane({ from, to, color, isActive }: {
     }
   });
 
-  return <mesh ref={tubeRef} geometry={tubeGeometry} material={tubeMaterial} />;
+  return <mesh ref={tubeRef} geometry={tubeGeometry} material={tubeMaterial} raycast={() => {}} />;
 }
 
 // ============================================================================
@@ -425,6 +426,7 @@ const TacticalNode = React.memo(function TacticalNode({
         ref={particlesRef}
         geometry={particleGeometry}
         material={particlesMaterial}
+        raycast={() => {}}
       />
 
       {/* Core inner glow */}
@@ -432,6 +434,7 @@ const TacticalNode = React.memo(function TacticalNode({
         name="core-glow"
         geometry={coreGlowGeometry}
         material={coreMaterial}
+        raycast={() => {}}
       />
 
       {/* Main sphere */}
@@ -439,6 +442,7 @@ const TacticalNode = React.memo(function TacticalNode({
         ref={sphereRef}
         geometry={nodeSphereGeometry}
         material={sphereMaterial}
+        raycast={() => {}}
       />
 
       {/* Progress ring - shows exact percentage via arc */}
@@ -451,6 +455,7 @@ const TacticalNode = React.memo(function TacticalNode({
           1,
           Math.max(0.02, node.progress / 100)
         ] as [number, number, number]}
+        raycast={() => {}}
       />
 
       {/* Progress ring background (subtle) */}
@@ -458,6 +463,7 @@ const TacticalNode = React.memo(function TacticalNode({
         geometry={progressRingGeometry}
         material={progressRingBgMaterial}
         rotation={[-Math.PI / 2, 0, 0]}
+        raycast={() => {}}
       />
 
       {/* State indicator ring at top */}
@@ -467,6 +473,7 @@ const TacticalNode = React.memo(function TacticalNode({
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 35, 0] as [number, number, number]}
         scale={1 + Math.sin(timeRef.current * 3) * 0.1}
+        raycast={() => {}}
       />
 
       {/* Node Label - HTML overlay for crisp text */}
@@ -549,6 +556,7 @@ const TacticalNode = React.memo(function TacticalNode({
           material={selectionRingMaterial}
           rotation={[-Math.PI / 2, 0, 0]}
           scale={1 + Math.sin(timeRef.current * 4) * 0.15}
+          raycast={() => {}}
         />
       )}
     </group>
@@ -661,8 +669,8 @@ export function WarMap3DCanvasInner() {
         />
       ))}
 
-      {/* Camera Controller */}
-      <CameraController />
+      {/* Camera Controller removed - OrbitControls in WarMap3DCanvas handles navigation */}
+      {/* <CameraController /> */}
     </>
   );
 }

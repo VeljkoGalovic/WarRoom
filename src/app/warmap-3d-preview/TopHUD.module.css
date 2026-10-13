@@ -1,0 +1,220 @@
+/**
+ * TopHUD Component Styles - Refined for Glassmorphism HUD
+ * Shared keyframes imported from styles/animations.css
+ * Local keyframes: progress-flow
+ */
+
+@keyframes progress-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.container {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 8px 20px;
+  background: rgba(3, 7, 18, 0.35);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(77, 216, 232, 0.18);
+  border-radius: 9999px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(77, 216, 232, 0.05) inset,
+    0 1px 0 rgba(77, 216, 232, 0.08) inset;
+  font-family: var(--wm-font-mono);
+  font-size: 0.6rem;
+  color: #4DD8E8;
+  letter-spacing: 0.05em;
+  transform: translateX(-50%) translateZ(0);
+  will-change: transform;
+  isolation: isolate;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.systemStatusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2ECC71;
+  box-shadow: 0 0 6px #2ECC71, 0 0 12px #2ECC71;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.systemDesignation {
+  font-family: var(--wm-font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4DD8E8;
+  text-shadow: 0 0 6px #4DD8E8;
+}
+
+.centerSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: auto;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.55rem;
+}
+
+.statusItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.statusLabel {
+  opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statusValue {
+  font-weight: 600;
+  font-family: var(--wm-font-mono);
+  min-width: 24px;
+  text-align: right;
+}
+
+.statusValueActive {
+  color: #FFB347;
+  text-shadow: 0 0 4px rgba(255, 179, 71, 0.3);
+}
+
+.statusValueSecured {
+  color: #2ECC71;
+  text-shadow: 0 0 4px rgba(46, 204, 113, 0.3);
+}
+
+.statusValueThreats {
+  color: #FF4D5E;
+  text-shadow: 0 0 4px rgba(255, 77, 94, 0.3);
+}
+
+.statusDivider {
+  width: 1px;
+  height: 10px;
+  background: rgba(77, 216, 232, 0.2);
+}
+
+.globalProgressBar {
+  position: relative;
+  width: 120px;
+  height: 3px;
+  background: rgba(77, 216, 232, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.globalProgressFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #4DD8E8, #2ECC71);
+  border-radius: 2px;
+  box-shadow: 0 0 8px #4DD8E8;
+  animation: progress-flow 3s linear infinite;
+  background-size: 200% 100%;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.timeDisplay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: right;
+}
+
+.timeLabel {
+  opacity: 0.55;
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timeValue {
+  font-weight: 600;
+  font-family: var(--wm-font-mono);
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}
+
+.divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(77, 216, 232, 0.2);
+}
+
+.stabilityDisplay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stabilityLabel {
+  opacity: 0.55;
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stabilityValue {
+  font-weight: 600;
+  color: #2ECC71;
+  font-family: var(--wm-font-mono);
+  font-size: 0.65rem;
+  text-shadow: 0 0 4px rgba(46, 204, 113, 0.3);
+}
+
+.telemetryDisplay {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  background: rgba(77, 216, 232, 0.08);
+  border: 1px solid rgba(77, 216, 232, 0.15);
+  border-radius: 9999px;
+}
+
+.telemetryDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #2ECC71;
+  box-shadow: 0 0 5px #2ECC71;
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.telemetryText {
+  font-size: 0.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

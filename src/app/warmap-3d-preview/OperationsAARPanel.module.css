@@ -1,0 +1,458 @@
+/**
+ * OperationsAARPanel Component Styles
+ * Shared keyframes imported from styles/animations.css
+ */
+
+.container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  bottom: 56px;
+  width: 380px;
+  z-index: 20;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background: rgba(8, 12, 22, 0.9);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(77, 216, 232, 0.25);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: var(--wm-font-mono);
+  color: #4DD8E8;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(77, 216, 232, 0.1);
+}
+
+.header {
+  padding: 0 4px 16px;
+  border-bottom: 1px solid rgba(77, 216, 232, 0.2);
+  margin-bottom: 16px;
+}
+
+.headerTitle {
+  font-family: var(--wm-font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4DD8E8;
+  text-shadow: 0 0 8px #4DD8E8;
+}
+
+.contentArea {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.upperHalf {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel {
+  background: rgba(5, 8, 16, 0.6);
+  border: 1px solid rgba(77, 216, 232, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.panelTitle {
+  font-family: var(--wm-font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4DD8E8;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panelTitleDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.directiveList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.directiveItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.directiveItemPriority {
+  background: rgba(255, 179, 71, 0.1);
+  border: 1px solid rgba(255, 179, 71, 0.3);
+}
+
+.directiveItemCritical {
+  background: rgba(255, 77, 94, 0.1);
+  border: 1px solid rgba(255, 77, 94, 0.3);
+}
+
+.directiveItemComplete {
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.directiveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.directiveDotCritical {
+  animation-duration: 1s;
+}
+
+.directiveDotComplete {
+  animation: none;
+}
+
+.directiveInfo {
+  font-size: 0.65rem;
+  flex: 1;
+}
+
+.directiveTitle {
+  font-weight: 600;
+}
+
+.directiveSubtitle {
+  font-size: 0.55rem;
+  opacity: 0.7;
+}
+
+.directiveBadge {
+  font-family: var(--wm-font-display);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.nodeIntelHeader {
+  font-family: var(--wm-font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4DD8E8;
+  margin-bottom: 12px;
+}
+
+.nodeIntelRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nodeStateDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.nodeName {
+  font-family: var(--wm-font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.nodeStateBadge {
+  font-family: var(--wm-font-display);
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.progressRingContainer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.progressRingSvg {
+  transform: rotate(-90deg);
+}
+
+.progressRingBg {
+  fill: none;
+  stroke: rgba(77, 216, 232, 0.1);
+  stroke-width: 5;
+}
+
+.progressRingFg {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.progressRingText {
+  fill: #4DD8E8;
+  font-family: var(--wm-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.progressInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.progressStatus {
+  font-family: var(--wm-font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.progressDesc {
+  font-size: 0.55rem;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.milestonesHeader {
+  font-family: var(--wm-font-display);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4DD8E8;
+  margin-bottom: 8px;
+}
+
+.milestonesList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.milestoneItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+}
+
+.milestoneCompleted {
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid #2ECC71;
+}
+
+.milestonePending {
+  background: transparent;
+  border: 1px solid rgba(77, 216, 232, 0.2);
+}
+
+.milestoneIcon {
+  width: 10px;
+  height: 10px;
+  border: 1px solid currentColor;
+  background: currentColor;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  flex-shrink: 0;
+}
+
+.milestoneIconPending {
+  background: transparent;
+}
+
+.milestoneText {
+  font-family: var(--wm-font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+
+.milestoneCompletedText {
+  color: #2ECC71;
+  opacity: 1;
+}
+
+.milestonePendingText {
+  color: #4DD8E8;
+  opacity: 0.7;
+}
+
+.milestoneBadge {
+  font-family: var(--wm-font-display);
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: #2ECC71;
+  letter-spacing: 0.1em;
+}
+
+.placeholder {
+  background: rgba(5, 8, 16, 0.6);
+  border: 1px solid rgba(77, 216, 232, 0.2);
+  border-radius: 6px;
+  padding: 24px;
+  text-align: center;
+}
+
+.placeholderIcon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.3;
+}
+
+.placeholderTitle {
+  font-family: var(--wm-font-display);
+  font-size: 0.7rem;
+  color: rgba(77, 216, 232, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.placeholderDesc {
+  font-size: 0.6rem;
+  opacity: 0.4;
+  margin-top: 8px;
+}
+
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(77, 216, 232, 0.4), transparent);
+  margin: 8px 0;
+}
+
+.aarHeader {
+  font-family: var(--wm-font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4DD8E8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aarHeaderDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4DD8E8;
+  box-shadow: 0 0 8px #4DD8E8;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+  font-weight: 600;
+}
+
+.formSelect {
+  appearance: none;
+  background: rgba(5, 8, 16, 0.8);
+  border: 1px solid rgba(77, 216, 232, 0.3);
+  border-radius: 4px;
+  padding: 10px 12px;
+  color: #4DD8E8;
+  font-family: var(--wm-font-mono);
+  font-size: 0.7rem;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234DD8E8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.formTextarea {
+  background: rgba(5, 8, 16, 0.8);
+  border: 1px solid rgba(77, 216, 232, 0.3);
+  border-radius: 4px;
+  padding: 12px;
+  color: #4DD8E8;
+  font-family: var(--wm-font-mono);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formTextarea:focus {
+  border-color: #4DD8E8;
+  box-shadow: 0 0 0 2px rgba(77, 216, 232, 0.2);
+}
+
+.charCount {
+  font-size: 0.55rem;
+  opacity: 0.5;
+  text-align: right;
+}
+
+.submitButton {
+  border: none;
+  border-radius: 4px;
+  padding: 12px 24px;
+  font-family: var(--wm-font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.submitButtonEnabled {
+  background: linear-gradient(135deg, #4DD8E8, #2ECC71);
+  color: #050810;
+}
+
+.submitButtonDisabled {
+  background: rgba(77, 216, 232, 0.1);
+  color: rgba(77, 216, 232, 0.4);
+  cursor: not-allowed;
+}
+
+.submitButtonEnabled:hover {
+  opacity: 0.9;
+}
+
+.submitButtonEnabled:active {
+  transform: scale(0.98);
+}

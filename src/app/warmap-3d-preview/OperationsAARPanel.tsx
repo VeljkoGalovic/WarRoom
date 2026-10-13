@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useWarMapStore } from "./WarMap3DCanvas";
+import styles from "./OperationsAARPanel.module.css";
 
 interface MilestoneData {
   id: string;
@@ -47,19 +48,6 @@ const stateConfig = {
   neutral: { color: "#6B7280", label: "PENDING" },
 } as const;
 
-// Global styles injected once
-if (typeof window !== "undefined" && !(window as any).__OPSAAR_STYLES_INJECTED__) {
-  (window as any).__OPSAAR_STYLES_INJECTED__ = true;
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.9); }
-    }
-  `;
-  document.head.appendChild(style);
-}
-
 export function OperationsAARPanel() {
   // FIX: Select values individually to maintain stable references and prevent infinite render loops
   const selectedNodeId = useWarMapStore((s) => s.selectedNodeId);
@@ -81,164 +69,122 @@ export function OperationsAARPanel() {
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: "80px",
-        right: "20px",
-        bottom: "56px",
-        width: "380px",
-        zIndex: 20,
-        pointerEvents: "auto",
-        display: "flex",
-        flexDirection: "column",
-        background: "rgba(8, 12, 22, 0.9)",
-        backdropFilter: "blur(16px)",
-        border: "1px solid rgba(77, 216, 232, 0.25)",
-        borderRadius: "8px",
-        padding: "16px",
-        fontFamily: "var(--wm-font-mono)",
-        color: "#4DD8E8",
-        overflow: "hidden",
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(77, 216, 232, 0.1)",
-      }}
-    >
+    <div className={styles.container}>
       {/* Header */}
-      <div style={{
-        padding: "0 4px 16px",
-        borderBottom: "1px solid rgba(77, 216, 232, 0.2)",
-        marginBottom: "16px",
-      }}>
-        <div style={{
-          fontFamily: "var(--wm-font-display)",
-          fontSize: "0.7rem",
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "#4DD8E8",
-          textShadow: "0 0 8px #4DD8E8",
-        }}>
+      <div className={styles.header}>
+        <div className={styles.headerTitle}>
           OPERATIONS BRIEFING // AAR
         </div>
       </div>
 
       {/* Content Area */}
-      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "20px" }}>
+      <div className={styles.contentArea}>
         {/* Upper Half: Mission Briefing & Selected Node Details */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div className={styles.upperHalf}>
           {/* Active Directives */}
-          <div style={{ background: "rgba(5, 8, 16, 0.6)", border: "1px solid rgba(77, 216, 232, 0.2)", borderRadius: "6px", padding: "12px" }}>
-            <div style={{
-              fontFamily: "var(--wm-font-display)",
-              fontSize: "0.6rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "#4DD8E8",
-              marginBottom: "12px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}>
-              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#FFB347", boxShadow: "0 0 8px #FFB347" }} />
+          <div className={styles.panel}>
+            <div className={styles.panelTitle}>
+              <span
+                className={styles.panelTitleDot}
+                style={{ background: "#FFB347", boxShadow: "0 0 8px #FFB347" }}
+              />
               ACTIVE DIRECTIVES
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "rgba(255, 179, 71, 0.1)", border: "1px solid rgba(255, 179, 71, 0.3)", borderRadius: "4px" }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FFB347", boxShadow: "0 0 6px #FFB347", animation: "pulse 1.5s ease-in-out infinite" }} />
-                <div style={{ fontSize: "0.65rem", flex: 1 }}>
-                  <div style={{ fontWeight: 600, color: "#FFB347" }}>DEPLOY WAR</div>
-                  <div style={{ fontSize: "0.55rem", opacity: 0.7 }}>Sector Beta — 67% complete</div>
+            <div className={styles.directiveList}>
+              <div className={`${styles.directiveItem} ${styles.directiveItemPriority}`}>
+                <div
+                  className={styles.directiveDot}
+                  style={{ color: "#FFB347" }}
+                />
+                <div className={styles.directiveInfo}>
+                  <div className={styles.directiveTitle} style={{ color: "#FFB347" }}>DEPLOY WAR</div>
+                  <div className={styles.directiveSubtitle}>Sector Beta — 67% complete</div>
                 </div>
-                <div style={{ fontFamily: "var(--wm-font-display)", fontSize: "0.5rem", fontWeight: 700, color: "#FFB347" }}>PRIORITY</div>
+                <div className={styles.directiveBadge} style={{ color: "#FFB347" }}>PRIORITY</div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "rgba(255, 77, 94, 0.1)", border: "1px solid rgba(255, 77, 94, 0.3)", borderRadius: "4px" }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FF4D5E", boxShadow: "0 0 6px #FF4D5E", animation: "pulse 1s ease-in-out infinite" }} />
-                <div style={{ fontSize: "0.65rem", flex: 1 }}>
-                  <div style={{ fontWeight: 600, color: "#FF4D5E" }}>REACH CODEFORCES</div>
-                  <div style={{ fontSize: "0.55rem", opacity: 0.7 }}>Sector Gamma — Signal degraded</div>
+              <div className={`${styles.directiveItem} ${styles.directiveItemCritical}`}>
+                <div
+                  className={`${styles.directiveDot} ${styles.directiveDotCritical}`}
+                  style={{ color: "#FF4D5E" }}
+                />
+                <div className={styles.directiveInfo}>
+                  <div className={styles.directiveTitle} style={{ color: "#FF4D5E" }}>REACH CODEFORCES</div>
+                  <div className={styles.directiveSubtitle}>Sector Gamma — Signal degraded</div>
                 </div>
-                <div style={{ fontFamily: "var(--wm-font-display)", fontSize: "0.5rem", fontWeight: 700, color: "#FF4D5E" }}>CRITICAL</div>
+                <div className={styles.directiveBadge} style={{ color: "#FF4D5E" }}>CRITICAL</div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "rgba(46, 204, 113, 0.1)", border: "1px solid rgba(46, 204, 113, 0.3)", borderRadius: "4px" }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#2ECC71", boxShadow: "0 0 6px #2ECC71" }} />
-                <div style={{ fontSize: "0.65rem", flex: 1 }}>
-                  <div style={{ fontWeight: 600, color: "#2ECC71" }}>TACTICAL PHYSICAL</div>
-                  <div style={{ fontSize: "0.55rem", opacity: 0.7 }}>Sector Alpha — Secured</div>
+              <div className={`${styles.directiveItem} ${styles.directiveItemComplete}`}>
+                <div
+                  className={`${styles.directiveDot} ${styles.directiveDotComplete}`}
+                  style={{ color: "#2ECC71" }}
+                />
+                <div className={styles.directiveInfo}>
+                  <div className={styles.directiveTitle} style={{ color: "#2ECC71" }}>TACTICAL PHYSICAL</div>
+                  <div className={styles.directiveSubtitle}>Sector Alpha — Secured</div>
                 </div>
-                <div style={{ fontFamily: "var(--wm-font-display)", fontSize: "0.5rem", fontWeight: 700, color: "#2ECC71" }}>COMPLETE</div>
+                <div className={styles.directiveBadge} style={{ color: "#2ECC71" }}>COMPLETE</div>
               </div>
             </div>
           </div>
 
           {/* Selected Node Deep Dive */}
           {selectedNode && (
-            <div style={{ background: "rgba(5, 8, 16, 0.6)", border: "1px solid rgba(77, 216, 232, 0.2)", borderRadius: "6px", padding: "12px" }}>
-              <div style={{
-                fontFamily: "var(--wm-font-display)",
-                fontSize: "0.6rem",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "#4DD8E8",
-                marginBottom: "12px",
-              }}>
+            <div className={styles.panel}>
+              <div className={styles.nodeIntelHeader}>
                 NODE INTELLIGENCE: {selectedNode.name}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: stateConfig[selectedNode.state].color, boxShadow: `0 0 8px ${stateConfig[selectedNode.state].color}` }} />
-                  <div style={{ fontFamily: "var(--wm-font-display)", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                <div className={styles.nodeIntelRow}>
+                  <div
+                    className={styles.nodeStateDot}
+                    style={{ background: stateConfig[selectedNode.state].color }}
+                  />
+                  <div className={styles.nodeName} style={{ color: stateConfig[selectedNode.state].color }}>
                     {selectedNode.name}
                   </div>
-                  <div style={{
-                    fontFamily: "var(--wm-font-display)",
-                    fontSize: "0.55rem",
-                    fontWeight: 700,
-                    padding: "3px 10px",
-                    borderRadius: "3px",
-                    background: `${stateConfig[selectedNode.state].color}20`,
-                    border: `1px solid ${stateConfig[selectedNode.state].color}`,
-                    color: stateConfig[selectedNode.state].color,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                  }}>
+                  <div
+                    className={styles.nodeStateBadge}
+                    style={{
+                      background: `${stateConfig[selectedNode.state].color}20`,
+                      border: `1px solid ${stateConfig[selectedNode.state].color}`,
+                      color: stateConfig[selectedNode.state].color,
+                    }}
+                  >
                     {stateConfig[selectedNode.state].label}
                   </div>
                 </div>
 
                 {/* Progress Ring */}
-                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                  <svg width="70" height="70" style={{ transform: "rotate(-90deg)" }}>
+                <div className={styles.progressRingContainer}>
+                  <svg width="70" height="70" className={styles.progressRingSvg}>
                     <circle
                       cx="35"
                       cy="35"
                       r="30"
-                      fill="none"
-                      stroke="rgba(77, 216, 232, 0.1)"
-                      strokeWidth="5"
+                      className={styles.progressRingBg}
                     />
                     <circle
                       cx="35"
                       cy="35"
                       r="30"
-                      fill="none"
-                      stroke={stateConfig[selectedNode.state].color}
-                      strokeWidth="5"
-                      strokeLinecap="round"
-                      strokeDasharray={2 * Math.PI * 30}
-                      strokeDashoffset={2 * Math.PI * 30 * (1 - selectedNode.progress / 100)}
-                      style={{ filter: `drop-shadow(0 0 4px ${stateConfig[selectedNode.state].color})` }}
+                      className={styles.progressRingFg}
+                      style={{
+                        stroke: stateConfig[selectedNode.state].color,
+                        strokeDasharray: 2 * Math.PI * 30,
+                        strokeDashoffset: 2 * Math.PI * 30 * (1 - selectedNode.progress / 100),
+                      }}
                     />
-                    <text x="35" y="38" textAnchor="middle" dominantBaseline="middle" fill="#4DD8E8" fontFamily="var(--wm-font-mono)" fontSize="12" fontWeight="700">
+                    <text x="35" y="38" textAnchor="middle" dominantBaseline="middle" className={styles.progressRingText}>
                       {selectedNode.progress}%
                     </text>
                   </svg>
-                  <div>
-                    <div style={{ fontFamily: "var(--wm-font-display)", fontSize: "0.6rem", fontWeight: 700, color: stateConfig[selectedNode.state].color, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                      {selectedNode.state === "conquered" ? "OPERATION COMPLETE" : selectedNode.state === "active" ? "IN PROGRESS" : selectedNode.state === "at-risk" ? "CRITICAL — INTERVENTION REQUIRED" : "AWAITING ORDERS"}
+                  <div className={styles.progressInfo}>
+                    <div className={styles.progressStatus} style={{ color: stateConfig[selectedNode.state].color }}>
+                      {selectedNode.state === "conquered" ? "OPERATION COMPLETE" :
+                       selectedNode.state === "active" ? "IN PROGRESS" :
+                       selectedNode.state === "at-risk" ? "CRITICAL — INTERVENTION REQUIRED" : "AWAITING ORDERS"}
                     </div>
-                    <div style={{ fontSize: "0.55rem", opacity: 0.6, marginTop: "4px" }}>
+                    <div className={styles.progressDesc}>
                       Progress toward sector objectives
                     </div>
                   </div>
@@ -247,48 +193,28 @@ export function OperationsAARPanel() {
                 {/* Milestones */}
                 {nodeMilestones.length > 0 && (
                   <div>
-                    <div style={{
-                      fontFamily: "var(--wm-font-display)",
-                      fontSize: "0.55rem",
-                      fontWeight: 700,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: "#4DD8E8",
-                      marginBottom: "8px",
-                    }}>
+                    <div className={styles.milestonesHeader}>
                       MILESTONES
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div className={styles.milestonesList}>
                       {nodeMilestones.map((m) => (
                         <div
                           key={m.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "10px",
-                            padding: "8px 10px",
-                            background: m.completed ? "rgba(46, 204, 113, 0.1)" : "transparent",
-                            border: `1px solid ${m.completed ? "#2ECC71" : "rgba(77, 216, 232, 0.2)"}`,
-                            borderRadius: "4px",
-                            clipPath: "polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px)",
-                          }}
+                          className={`${styles.milestoneItem} ${m.completed ? styles.milestoneCompleted : styles.milestonePending}`}
                         >
-                          <div style={{
-                            width: "10px", height: "10px",
-                            border: `1px solid ${m.completed ? "#2ECC71" : "rgba(77, 216, 232, 0.3)"}`,
-                            background: m.completed ? "#2ECC71" : "transparent",
-                            clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
-                            flexShrink: 0,
-                          }} />
-                          <div style={{
-                            fontFamily: "var(--wm-font-mono)", fontSize: "0.65rem",
-                            color: m.completed ? "#2ECC71" : "#4DD8E8",
-                            opacity: m.completed ? 1 : 0.7,
-                            textTransform: "uppercase", letterSpacing: "0.05em", flex: 1,
-                          }}>
+                          <div
+                            className={`${styles.milestoneIcon} ${m.completed ? "" : styles.milestoneIconPending}`}
+                            style={{
+                              color: m.completed ? "#2ECC71" : "rgba(77, 216, 232, 0.3)",
+                              background: m.completed ? "#2ECC71" : "transparent",
+                            }}
+                          />
+                          <div
+                            className={`${styles.milestoneText} ${m.completed ? styles.milestoneCompletedText : styles.milestonePendingText}`}
+                          >
                             {m.title}
                           </div>
-                          {m.completed && <div style={{ fontFamily: "var(--wm-font-display)", fontSize: "0.5rem", fontWeight: 700, color: "#2ECC71", letterSpacing: "0.1em" }}>SECURED</div>}
+                          {m.completed && <div className={styles.milestoneBadge}>SECURED</div>}
                         </div>
                       ))}
                     </div>
@@ -300,12 +226,12 @@ export function OperationsAARPanel() {
 
           {/* No selection placeholder */}
           {!selectedNode && (
-            <div style={{ background: "rgba(5, 8, 16, 0.6)", border: "1px solid rgba(77, 216, 232, 0.2)", borderRadius: "6px", padding: "24px", textAlign: "center" }}>
-              <div style={{ fontSize: "2rem", marginBottom: "8px", opacity: 0.3 }}>◈</div>
-              <div style={{ fontFamily: "var(--wm-font-display)", fontSize: "0.7rem", color: "rgba(77, 216, 232, 0.5)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            <div className={styles.placeholder}>
+              <div className={styles.placeholderIcon}>◈</div>
+              <div className={styles.placeholderTitle}>
                 NO NODE SELECTED
               </div>
-              <div style={{ fontSize: "0.6rem", opacity: 0.4, marginTop: "8px" }}>
+              <div className={styles.placeholderDesc}>
                 Click a node in the tactical display for intelligence
               </div>
             </div>
@@ -313,53 +239,25 @@ export function OperationsAARPanel() {
         </div>
 
         {/* Divider */}
-        <div style={{
-          height: "1px",
-          background: "linear-gradient(90deg, transparent, rgba(77, 216, 232, 0.4), transparent)",
-          margin: "8px 0",
-        }} />
+        <div className={styles.divider} />
 
         {/* Lower Half: AAR Logger */}
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <div style={{
-            fontFamily: "var(--wm-font-display)",
-            fontSize: "0.6rem",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "#4DD8E8",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4DD8E8", boxShadow: "0 0 8px #4DD8E8" }} />
+          <div className={styles.aarHeader}>
+            <span className={styles.aarHeaderDot} />
             AFTER-ACTION REPORT
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <form onSubmit={handleSubmit} className={styles.form}>
             {/* Category Selector */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <label style={{ fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.6, fontWeight: 600 }}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>
                 CATEGORY
               </label>
               <select
                 value={logCategory}
                 onChange={(e) => setLogCategory(e.target.value as typeof LOG_CATEGORIES[0])}
-                style={{
-                  appearance: "none",
-                  background: "rgba(5, 8, 16, 0.8)",
-                  border: "1px solid rgba(77, 216, 232, 0.3)",
-                  borderRadius: "4px",
-                  padding: "10px 12px",
-                  color: "#4DD8E8",
-                  fontFamily: "var(--wm-font-mono)",
-                  fontSize: "0.7rem",
-                  cursor: "pointer",
-                  backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234DD8E8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "right 12px center",
-                  paddingRight: "36px",
-                }}
+                className={styles.formSelect}
               >
                 {LOG_CATEGORIES.map(cat => (
                   <option key={cat} value={cat}>{cat.toUpperCase()}</option>
@@ -368,8 +266,8 @@ export function OperationsAARPanel() {
             </div>
 
             {/* Textarea */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <label style={{ fontSize: "0.55rem", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.6, fontWeight: 600 }}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>
                 LOG ENTRY
               </label>
               <textarea
@@ -377,29 +275,9 @@ export function OperationsAARPanel() {
                 onChange={(e) => setLogText(e.target.value)}
                 placeholder="Enter operational log entry..."
                 rows={4}
-                style={{
-                  background: "rgba(5, 8, 16, 0.8)",
-                  border: "1px solid rgba(77, 216, 232, 0.3)",
-                  borderRadius: "4px",
-                  padding: "12px",
-                  color: "#4DD8E8",
-                  fontFamily: "var(--wm-font-mono)",
-                  fontSize: "0.7rem",
-                  lineHeight: "1.5",
-                  resize: "vertical",
-                  outline: "none",
-                  transition: "border-color 0.2s, box-shadow 0.2s",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#4DD8E8";
-                  e.target.style.boxShadow = "0 0 0 2px rgba(77, 216, 232, 0.2)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "rgba(77, 216, 232, 0.3)";
-                  e.target.style.boxShadow = "none";
-                }}
+                className={styles.formTextarea}
               />
-              <div style={{ fontSize: "0.55rem", opacity: 0.5, textAlign: "right" }}>
+              <div className={styles.charCount}>
                 {logText.length}/500
               </div>
             </div>
@@ -408,24 +286,9 @@ export function OperationsAARPanel() {
             <button
               type="submit"
               disabled={!logText.trim()}
-              style={{
-                background: logText.trim() ? "linear-gradient(135deg, #4DD8E8, #2ECC71)" : "rgba(77, 216, 232, 0.1)",
-                border: "none",
-                borderRadius: "4px",
-                padding: "12px 24px",
-                fontFamily: "var(--wm-font-display)",
-                fontSize: "0.7rem",
-                fontWeight: 700,
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
-                color: logText.trim() ? "#050810" : "rgba(77, 216, 232, 0.4)",
-                cursor: logText.trim() ? "pointer" : "not-allowed",
-                transition: "all 0.2s ease",
-                boxShadow: logText.trim() ? "0 4px 20px rgba(77, 216, 232, 0.4)" : "none",
-                marginTop: "4px",
-              }}
+              className={`${styles.submitButton} ${logText.trim() ? styles.submitButtonEnabled : styles.submitButtonDisabled}`}
             >
-              TRANSMIT LOG
+              SUBMIT LOG
             </button>
           </form>
         </div>

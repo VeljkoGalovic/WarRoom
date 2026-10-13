@@ -1,0 +1,215 @@
+/**
+ * DailyOpsLogPanel Component Styles - Refined for Glassmorphism HUD
+ * Shared keyframes imported from styles/animations.css
+ * Local keyframes: slide-in, pulse-accent (only used here)
+ */
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-accent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.aside {
+  position: fixed;
+  top: 52px;
+  right: 12px;
+  bottom: 52px;
+  width: 280px;
+  z-index: 20;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background: rgba(3, 7, 18, 0.35);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(77, 216, 232, 0.15);
+  border-radius: 10px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(77, 216, 232, 0.05) inset,
+    0 1px 0 rgba(77, 216, 232, 0.08) inset;
+  font-family: var(--wm-font-mono);
+  font-size: 0.55rem;
+  color: #4DD8E8;
+  letter-spacing: 0.03em;
+  transform: translateZ(0);
+  will-change: transform;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.cornerNotch {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  animation: corner-pulse 4s ease-in-out infinite;
+}
+
+.cornerNotchTopLeft {
+  top: 0;
+  left: 0;
+  border-top: 1px solid rgba(77, 216, 232, 0.3);
+  border-left: 1px solid rgba(77, 216, 232, 0.3);
+  border-radius: 10px 0 0 0;
+}
+
+.cornerNotchTopRight {
+  top: 0;
+  right: 0;
+  border-top: 1px solid rgba(77, 216, 232, 0.3);
+  border-right: 1px solid rgba(77, 216, 232, 0.3);
+  border-radius: 0 10px 0 0;
+  animation-delay: 1s;
+}
+
+.cornerNotchBottomLeft {
+  bottom: 0;
+  left: 0;
+  border-bottom: 1px solid rgba(77, 216, 232, 0.3);
+  border-left: 1px solid rgba(77, 216, 232, 0.3);
+  border-radius: 0 0 0 10px;
+  animation-delay: 2s;
+}
+
+.cornerNotchBottomRight {
+  bottom: 0;
+  right: 0;
+  border-bottom: 1px solid rgba(77, 216, 232, 0.3);
+  border-right: 1px solid rgba(77, 216, 232, 0.3);
+  border-radius: 0 0 10px 0;
+  animation-delay: 3s;
+}
+
+.header {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid rgba(77, 216, 232, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headerIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(77, 216, 232, 0.12), rgba(77, 216, 232, 0.02));
+  border: 1px solid rgba(77, 216, 232, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--wm-font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #4DD8E8;
+}
+
+.headerTitleBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.headerTitle {
+  font-family: var(--wm-font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4DD8E8;
+  line-height: 1;
+}
+
+.headerSubtitle {
+  font-size: 0.45rem;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.headerCount {
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-family: var(--wm-font-mono);
+  color: #4DD8E8;
+  text-shadow: 0 0 6px rgba(77, 216, 232, 0.4);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.logEntry {
+  background: rgba(77, 216, 232, 0.03);
+  border: 1px solid rgba(77, 216, 232, 0.06);
+  border-radius: 6px;
+  padding: 8px 10px;
+  transition: all 0.15s ease;
+  animation: slide-in 0.3s ease-out backwards;
+}
+
+.logEntry:hover {
+  background: rgba(77, 216, 232, 0.06);
+  border-color: rgba(77, 216, 232, 0.12);
+}
+
+.logHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.logTime {
+  opacity: 0.5;
+  font-family: var(--wm-font-display);
+  font-size: 0.48rem;
+  min-width: 48px;
+  letter-spacing: 0.05em;
+}
+
+.logCategory {
+  font-size: 0.45rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+}
+
+.categoryPhysical {
+  color: #2ECC71;
+  background: rgba(46, 204, 113, 0.1);
+  border-color: rgba(46, 204, 113, 0.2);
+}
+
+.categoryAlgorithmic {
+  color: #FFB347;
+  background: rgba(255, 179, 71, 0.1);
+  border-color: rgba(255, 179, 71, 0.2);
+}
+
+.categorySystems {
+  color: #4DD8E8;
+  background: rgba(77, 216, 232, 0.1);
+  border-color: rgba(77, 216, 232, 0.2);
+}
+
+.logMessage {
+  font-size: 0.55rem;
+  line-height: 1.4;
+  color: #B8C5D6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
