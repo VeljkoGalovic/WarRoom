@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,8 +30,14 @@ import {
 import { useTheme } from "next-themes";
 import { CommandPalette } from "@/components/ui/command-palette";
 
+// Mock user data since we removed authentication
+const mockUser = {
+  name: "Commander",
+  email: "commander@warroom.local",
+  image: "",
+};
+
 export function TopNav() {
-  const { data: session } = useSession() || { data: null };
   const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
@@ -71,7 +76,7 @@ export function TopNav() {
             <input
               type="search"
               placeholder="Search..."
-              className="..."
+              className="h-9 w-64 rounded-lg bg-input border border-border px-10 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
               onFocus={(e) => {
                 e.target.blur(); // prevent the native focus ring fighting the palette
                 setCommandPaletteOpen(true);
@@ -105,15 +110,15 @@ export function TopNav() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || ""} />
-                  <AvatarFallback>{session?.user?.name?.[0] || "U"}</AvatarFallback>
+                  <AvatarImage src={mockUser.image || ""} alt={mockUser.name || ""} />
+                  <AvatarFallback>{mockUser.name?.[0] || "U"}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <div className="px-4 py-2 border-b">
-                <p className="font-medium text-sm">{session?.user?.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{session?.user?.email}</p>
+                <p className="font-medium text-sm">{mockUser.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{mockUser.email}</p>
               </div>
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/profile" className="flex items-center gap-2">
@@ -128,12 +133,9 @@ export function TopNav() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                className="flex items-center gap-2 text-destructive focus:text-destructive"
-              >
+              <DropdownMenuItem className="flex items-center gap-2 text-destructive focus:text-destructive">
                 <LogOut className="h-4 w-4" />
-                Sign out
+                Sign out (disabled)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

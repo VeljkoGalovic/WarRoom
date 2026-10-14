@@ -13,19 +13,13 @@ export default function Home() {
         <p className="text-sm text-slate-400 mb-8">
           Tactical Command & Orchestration Platform
         </p>
-        
+
         <div className="space-y-3">
           <Link
             href="/dashboard"
             className="flex items-center justify-center w-full py-3 px-4 bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold rounded-xl transition shadow-lg shadow-amber-600/20"
           >
             Enter Command Dashboard
-          </Link>
-          <Link
-            href="/auth/signin"
-            className="flex items-center justify-center w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-xl transition border border-slate-700/50"
-          >
-            Sign In / Authentication
           </Link>
         </div>
       </div>
