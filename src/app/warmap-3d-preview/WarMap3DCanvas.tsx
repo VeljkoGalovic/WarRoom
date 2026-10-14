@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Canvas } from "@react-three/fiber";
-import { EffectComposer, Bloom, Vignette, ChromaticAberration, Noise } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette, ChromaticAberration } from "@react-three/postprocessing";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { create } from "zustand";
@@ -184,7 +184,9 @@ export function WarMap3DCanvas() {
       camera={{ position: [72, 200, 440], fov: 60, near: 0.5, far: 1000 }}
       style={{ width: "100%", height: "100%", position: "fixed", top: 0, left: 0 }}
       onCreated={({ gl }) => {
-        gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        // Snap to integer pixel ratio - fractional ratios (1.25/1.5 on HiDPI)
+        // make thin shader-drawn grid lines shimmer/flicker
+        gl.setPixelRatio(Math.min(Math.max(1, Math.round(window.devicePixelRatio)), 2));
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.2; // Reduced exposure for deeper blacks
         gl.shadowMap.enabled = false; // Disable shadows for performance
@@ -197,7 +199,7 @@ export function WarMap3DCanvas() {
       <OrbitControls
         makeDefault={true}
         enableDamping={true}
-        dampingFactor={0.04}
+        dampingFactor={0.08}
         enableRotate={true}
         target={TARGET_CENTER}
         minDistance={10}
@@ -224,11 +226,8 @@ export function WarMap3DCanvas() {
           {/* Subtle chromatic aberration for sci-fi feel */}
           <ChromaticAberration offset={[0.0005, 0.0003]} />
 
-          {/* Very subtle film grain */}
-          <Noise
-            opacity={0.015}
-            premultiply={true}
-          />
+          {/* Film grain removed - it re-randomizes every frame and reads as
+              flickering on thin, dim grid lines */}
 
           {/* Gentle vignette to focus center */}
           <Vignette

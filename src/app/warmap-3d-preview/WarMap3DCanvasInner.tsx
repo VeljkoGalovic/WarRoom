@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Html, Grid } from "@react-three/drei";
+import { Html, Grid, primitive } from "@react-three/drei";
 import * as THREE from "three";
 import { useShallow } from "zustand/react/shallow";
 import { useWarMapStore } from "./WarMap3DCanvas";
@@ -307,84 +307,126 @@ function EmitterLightBeam() {
 // INFINITE GRID - Using Drei's Grid component with Topological Contours & Sector Labels
 // ============================================================================
 
+// Pre-compute contour ring configurations
+const CONTOUR_RINGS = [
+  { baseRadius: 100, color: COLORS.holoCyan, speed: 0.5, phase: 0, thickness: 2 },
+  { baseRadius: 250, color: COLORS.progressAmber, speed: 0.5, phase: 0.8, thickness: 2 },
+  { baseRadius: 400, color: COLORS.conquestGreen, speed: 0.5, phase: 1.6, thickness: 2 },
+  { baseRadius: 550, color: COLORS.holoCyan, speed: 0.5, phase: 2.4, thickness: 2 },
+  { baseRadius: 700, color: COLORS.progressAmber, speed: 0.5, phase: 3.2, thickness: 2 },
+  { baseRadius: 850, color: COLORS.conquestGreen, speed: 0.5, phase: 4.0, thickness: 2 },
+  { baseRadius: 1000, color: COLORS.holoCyan, speed: 0.5, phase: 4.8, thickness: 2 },
+  { baseRadius: 1150, color: COLORS.progressAmber, speed: 0.5, phase: 5.6, thickness: 2 },
+  { baseRadius: 1300, color: COLORS.conquestGreen, speed: 0.5, phase: 6.4, thickness: 2 },
+  { baseRadius: 1450, color: COLORS.holoCyan, speed: 0.5, phase: 7.2, thickness: 2 },
+];
+
+const FINE_CONTOUR_RINGS = Array.from({ length: 20 }, (_, i) => ({
+  baseRadius: 50 + i * 75,
+  color: 0x4dd8e8,
+  speed: 0.4,
+  phase: i * 0.5,
+  thickness: 1,
+}));
+
 function InfiniteGrid() {
   const timeRef = React.useRef(0);
   const { scene } = useThree();
+  const contourRefs = React.useRef<(THREE.Mesh | null)[]>([]);
+  const fineContourRefs = React.useRef<(THREE.Mesh | null)[]>([]);
 
+  // Create contour ring meshes once
+  const contourMeshes = React.useMemo(() => {
+    return CONTOUR_RINGS.map((config, i) => {
+      const geom = new THREE.RingGeometry(config.baseRadius - config.thickness / 2, config.baseRadius + config.thickness / 2, 128);
+      const mat = new THREE.MeshBasicMaterial({
+        color: config.color,
+        transparent: true,
+        opacity: 0.12 - i * 0.01,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.renderOrder = 1;
+      return mesh;
+    });
+  }, []);
+
+  const fineContourMeshes = React.useMemo(() => {
+    return FINE_CONTOUR_RINGS.map((config) => {
+      const geom = new THREE.RingGeometry(config.baseRadius - config.thickness / 2, config.baseRadius + config.thickness / 2, 64);
+      const mat = new THREE.MeshBasicMaterial({
+        color: config.color,
+        transparent: true,
+        opacity: 0.04,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.renderOrder = 1;
+      return mesh;
+    });
+  }, []);
+
+  // Animate contour rings in useFrame - no geometry/material recreation
   useFrame((_, delta) => {
     timeRef.current += delta;
+
+    // Animate main contour rings - pulse radius via scale and opacity
+    contourMeshes.forEach((mesh, i) => {
+      const config = CONTOUR_RINGS[i];
+      const pulseScale = 1 + Math.sin(timeRef.current * config.speed + config.phase) * 0.04; // ~4% scale pulse
+      const pulseOpacity = Math.max(0.02, (0.12 - i * 0.01) + Math.sin(timeRef.current * 0.3 + config.phase) * 0.03);
+
+      mesh.scale.setScalar(pulseScale);
+      (mesh.material as THREE.MeshBasicMaterial).opacity = pulseOpacity;
+    });
+
+    // Animate fine contour rings - opacity pulse only
+    fineContourMeshes.forEach((mesh, i) => {
+      const config = FINE_CONTOUR_RINGS[i];
+      const pulseOpacity = 0.04 + Math.sin(timeRef.current * config.speed + config.phase) * 0.02;
+      (mesh.material as THREE.MeshBasicMaterial).opacity = pulseOpacity;
+    });
   });
 
   return (
     <group raycast={() => {}}>
-      {/* Base Infinite Grid from Drei */}
+      {/* Base Infinite Grid from Drei - followCamera instead of infiniteGrid:
+          infiniteGrid multiplies vertex coords by (1 + fadeDistance) in the
+          shader (~2.4M units), and float32 interpolation error at that
+          magnitude makes lines jiggle ~1px during camera motion. followCamera
+          keeps varying values small; the line pattern stays world-anchored. */}
       <Grid
-        args={[4000, 400]}
+        args={[2400, 2400]}
         cellColor="#082028"
         cellSize={50}
-        cellThickness={0.5}
-        fadeDistance={2000}
-        fadeStrength={0.5}
-        infiniteGrid={true}
+        cellThickness={0.8}
+        fadeDistance={1000}
+        fadeStrength={1}
+        followCamera={true}
         position={[0, 0.1, 0]}
         sectionColor="#0f3844"
         sectionSize={200}
-        sectionThickness={1}
+        sectionThickness={1.2}
         raycast={() => {}}
       />
 
-      {/* Topological Contour Lines - Procedural ring effect via ring meshes */}
-      <group position={[0, 0.15, 0]} raycast={() => {}}>
-        {/* Concentric contour rings with subtle pulsing */}
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => {
-          const baseRadius = 100 + i * 150;
-          const pulseOffset = Math.sin(timeRef.current * 0.5 + i * 0.8) * 8;
-          const radius = baseRadius + pulseOffset;
-          const opacity = Math.max(0.02, 0.12 - i * 0.01 + Math.sin(timeRef.current * 0.3 + i) * 0.03);
-
-          return (
-            <mesh
-              key={`contour-${i}`}
-              geometry={new THREE.RingGeometry(radius - 1, radius + 1, 128)}
-              rotation={[-Math.PI / 2, 0, 0]}
-              material={new THREE.MeshBasicMaterial({
-                color: i % 3 === 0 ? COLORS.holoCyan : (i % 3 === 1 ? COLORS.progressAmber : COLORS.conquestGreen),
-                transparent: true,
-                opacity: opacity,
-                side: THREE.DoubleSide,
-                depthWrite: false,
-                blending: THREE.AdditiveBlending,
-              })}
-              raycast={() => {}}
-            />
-          );
-        })}
-
-        {/* Finer contour lines - more frequent, lower opacity */}
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((i) => {
-          const radius = 50 + i * 75;
-          const opacity = 0.04 + Math.sin(timeRef.current * 0.4 + i * 0.5) * 0.02;
-
-          return (
-            <mesh
-              key={`contour-fine-${i}`}
-              geometry={new THREE.RingGeometry(radius - 0.5, radius + 0.5, 64)}
-              rotation={[-Math.PI / 2, 0, 0]}
-              material={new THREE.MeshBasicMaterial({
-                color: 0x4dd8e8,
-                transparent: true,
-                opacity: opacity,
-                side: THREE.DoubleSide,
-                depthWrite: false,
-              })}
-              raycast={() => {}}
-            />
-          );
-        })}
+      {/* Topological Contour Lines - Pre-created meshes animated via useFrame */}
+      <group position={[0, 0.25, 0]} raycast={() => {}}>
+        {contourMeshes.map((mesh, i) => (
+          <primitive key={`contour-${i}`} object={mesh} raycast={() => {}} />
+        ))}
+        {fineContourMeshes.map((mesh, i) => (
+          <primitive key={`contour-fine-${i}`} object={mesh} raycast={() => {}} />
+        ))}
       </group>
 
       {/* Sector Ground Labels - HUD text tags on floor grid */}
-      <group position={[0, 0.3, 0]} raycast={() => {}}>
+      <group position={[0, 0.4, 0]} raycast={() => {}}>
         {/* DSA SECTOR - near command center */}
         <Html
           position={[0, 0, 0]}
@@ -640,16 +682,15 @@ function InfiniteGrid() {
 }
 
 // ============================================================================
-// AMBIENT PARTICLES - Atmospheric Particle Field & Rising Motes
+// AMBIENT PARTICLES - Atmospheric Particle Field
 // ============================================================================
 
 function AmbientParticles() {
   const particlesRef = React.useRef<THREE.Points | null>(null);
-  const motesRef = React.useRef<THREE.Points | null>(null);
   const timeRef = React.useRef(0);
 
   // Main ambient particle field - wide distribution, slow drift
-  const { positions, colors, sizes, velocities } = React.useMemo(() => {
+  const { particleGeometry, particleVelocities } = React.useMemo(() => {
     const count = 300;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
@@ -686,20 +727,17 @@ function AmbientParticles() {
       velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.08;
     }
 
-    return { positions, colors, sizes, velocities };
-  }, []);
-
-  const particleGeometry = React.useMemo(() => {
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
     // velocity stored in ref, not as geometry attribute (avoids Three.js buffer upload issues)
-    return geom;
+
+    return { particleGeometry: geom, particleVelocities: velocities };
   }, []);
 
-  // Store velocities in ref for animation (not as geometry attribute)
-  const particleVelocities = React.useRef(velocities);
+  // Store velocities in ref for animation
+  const particleVelocitiesRef = React.useRef(particleVelocities);
 
   const particleMaterial = React.useMemo(() => new THREE.PointsMaterial({
     size: 1,
@@ -711,78 +749,12 @@ function AmbientParticles() {
     blending: THREE.AdditiveBlending,
   }), []);
 
-  // Rising Motes - smaller, brighter particles near emitter
-  const { motePositions, moteColors, moteSizes, moteVelocities, motePhases } = React.useMemo(() => {
-    const count = 120;
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
-    const velocities = new Float32Array(count * 3);
-    const phases = new Float32Array(count);
-
-    for (let i = 0; i < count; i++) {
-      // Concentrated near emitter, rising upward
-      const radius = Math.random() * 25;
-      const theta = Math.random() * Math.PI * 2;
-      const height = Math.random() * 80;
-
-      positions[i * 3] = radius * Math.cos(theta);
-      positions[i * 3 + 1] = height;
-      positions[i * 3 + 2] = radius * Math.sin(theta);
-
-      // Brighter cyan/amber colors
-      const colorChoice = Math.random();
-      let color: THREE.Color;
-      if (colorChoice < 0.5) color = new THREE.Color(COLORS.holoCyan);
-      else if (colorChoice < 0.8) color = new THREE.Color(COLORS.progressAmber);
-      else color = new THREE.Color(COLORS.conquestGreen);
-
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
-
-      sizes[i] = 0.15 + Math.random() * 0.4;
-
-      // Faster upward velocity with slight swirl
-      velocities[i * 3] = (Math.random() - 0.5) * 0.15;
-      velocities[i * 3 + 1] = 0.3 + Math.random() * 0.4;
-      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
-
-      phases[i] = Math.random() * Math.PI * 2;
-    }
-
-    return { positions, colors, sizes, velocities, phases };
-  }, []);
-
-  const moteGeometry = React.useMemo(() => {
-    const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.BufferAttribute(motePositions, 3));
-    geom.setAttribute('color', new THREE.BufferAttribute(moteColors, 3));
-    geom.setAttribute('size', new THREE.BufferAttribute(moteSizes, 1));
-    // velocity and phase stored in refs
-    return geom;
-  }, []);
-
-  // Store velocities and phases in refs for animation
-  const moteVelocitiesRef = React.useRef(moteVelocities);
-  const motePhasesRef = React.useRef(motePhases);
-
-  const moteMaterial = React.useMemo(() => new THREE.PointsMaterial({
-    size: 1,
-    transparent: true,
-    opacity: 0.6,
-    vertexColors: true,
-    sizeAttenuation: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  }), []);
-
   useFrame((_, delta) => {
     timeRef.current += delta;
 
     // Update main ambient particles
     const posAttr = particlesRef.current?.geometry?.attributes?.position;
-    const velocities = particleVelocities.current;
+    const velocities = particleVelocitiesRef.current;
     if (posAttr?.array && velocities) {
       const pos = posAttr.array as Float32Array;
       const vel = velocities;
@@ -805,45 +777,12 @@ function AmbientParticles() {
       particlesRef.current.geometry.attributes.position.needsUpdate = true;
       particlesRef.current.rotation.y += delta * 0.002;
     }
-
-    // Update rising motes
-    const motePosAttr = motesRef.current?.geometry?.attributes?.position;
-    const moteVelocities = moteVelocitiesRef.current;
-    const motePhases = motePhasesRef.current;
-    if (motePosAttr?.array && moteVelocities && motePhases) {
-      const pos = motePosAttr.array as Float32Array;
-      const vel = moteVelocities;
-      const phase = motePhases;
-      const count = pos.length / 3;
-
-      for (let i = 0; i < count; i++) {
-        // Swirling upward motion
-        const swirlAngle = timeRef.current * 0.8 + phase[i];
-        const swirlRadius = 0.15;
-        pos[i * 3] += vel[i * 3] + Math.cos(swirlAngle) * swirlRadius;
-        pos[i * 3 + 1] += vel[i * 3 + 1];
-        pos[i * 3 + 2] += vel[i * 3 + 2] + Math.sin(swirlAngle) * swirlRadius;
-
-        // Wrap around when reaching top of beam
-        if (pos[i * 3 + 1] > 100) {
-          const radius = Math.random() * 20;
-          const theta = Math.random() * Math.PI * 2;
-          pos[i * 3] = radius * Math.cos(theta);
-          pos[i * 3 + 1] = 5 + Math.random() * 15;
-          pos[i * 3 + 2] = radius * Math.sin(theta);
-        }
-      }
-      motesRef.current.geometry.attributes.position.needsUpdate = true;
-    }
   });
 
   return (
     <group raycast={() => {}}>
       {/* Main ambient particle field */}
       <points ref={particlesRef} geometry={particleGeometry} material={particleMaterial} raycast={() => {}} />
-
-      {/* Rising motes near emitter */}
-      <points ref={motesRef} geometry={moteGeometry} material={moteMaterial} raycast={() => {}} />
     </group>
   );
 }
@@ -1554,12 +1493,6 @@ export function WarMap3DCanvasInner() {
 
       {/* Fog for atmospheric depth */}
       <fog attach="fog" args={[COLORS.void, 50, 800]} />
-
-      {/* Central Holo-Emitter Base at origin */}
-      <HoloEmitterBase />
-
-      {/* Upward Volumetric Light Beam from emitter */}
-      <EmitterLightBeam />
 
       {/* Infinite Grid - replaces finite floor grid */}
       <InfiniteGrid />
