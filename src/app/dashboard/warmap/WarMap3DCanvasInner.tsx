@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Html, Grid } from "@react-three/drei";
+import { Html, Grid, DragControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useShallow } from "zustand/react/shallow";
 import { useWarMapStore } from "./WarMap3DCanvas";
@@ -160,8 +160,8 @@ function HoloEmitterBase() {
         raycast={() => {}}
       />
 
-      {/* Rotating detail rings on middle section */}
-      <group rotation={[0, timeRef.current * 0.3, 0]}>
+      {/* Rotating detail rings on middle section - horizontal (XZ plane) */}
+      <group rotation={[-Math.PI / 2, timeRef.current * 0.3, 0]}>
         <mesh
           geometry={new THREE.TorusGeometry(16, 0.3, 4, 32)}
           position={[0, 6.5, 0]}
@@ -329,6 +329,254 @@ const FINE_CONTOUR_RINGS = Array.from({ length: 20 }, (_, i) => ({
   thickness: 1,
 }));
 
+// Static sector labels - separate component to avoid re-renders from useFrame
+function SectorLabels() {
+  return (
+    <group position={[0, 0.4, 0]} raycast={() => {}}>
+      {/* DSA SECTOR - near command center */}
+      <Html
+        position={[0, 0, 0]}
+        occlude={false}
+        transform={true}
+        sprite={false}
+        center
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: 'rotateX(90deg) scale(12)',
+        }}
+      >
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '28px',
+          fontWeight: 600,
+          letterSpacing: '0.3em',
+          textTransform: 'uppercase',
+          color: '#4DD8E8',
+          opacity: 0.15,
+          textShadow: '0 0 20px #4DD8E8',
+          whiteSpace: 'nowrap',
+        }}>
+          DSA SECTOR
+        </div>
+      </Html>
+
+      {/* SECTOR 01 - near tactical physical node */}
+      <Html
+        position={[-100, 0, -80]}
+        occlude={false}
+        transform={true}
+        sprite={false}
+        center
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: 'rotateX(90deg) scale(10)',
+        }}
+      >
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '24px',
+          fontWeight: 500,
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          color: '#2ECC71',
+          opacity: 0.12,
+          textShadow: '0 0 16px #2ECC71',
+          whiteSpace: 'nowrap',
+        }}>
+          SECTOR 01
+        </div>
+      </Html>
+
+      {/* OPTIMIZATION ZONE - near deploy war node */}
+      <Html
+        position={[80, 0, -60]}
+        occlude={false}
+        transform={true}
+        sprite={false}
+        center
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: 'rotateX(90deg) scale(10)',
+        }}
+      >
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '22px',
+          fontWeight: 500,
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          color: '#FFB347',
+          opacity: 0.12,
+          textShadow: '0 0 16px #FFB347',
+          whiteSpace: 'nowrap',
+        }}>
+          OPTIMIZATION ZONE
+        </div>
+      </Html>
+
+      {/* THREAT SECTOR - near reach codeforces node */}
+      <Html
+        position={[-140, 0, 100]}
+        occlude={false}
+        transform={true}
+        sprite={false}
+        center
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: 'rotateX(90deg) scale(10)',
+        }}
+      >
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '22px',
+          fontWeight: 500,
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          color: '#FF4D5E',
+          opacity: 0.1,
+          textShadow: '0 0 16px #FF4D5E',
+          whiteSpace: 'nowrap',
+        }}>
+          THREAT SECTOR
+        </div>
+      </Html>
+
+      {/* EXPANSION FRONTIER - far edge */}
+      <Html
+        position={[200, 0, 180]}
+        occlude={false}
+        transform={true}
+        sprite={false}
+        center
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: 'rotateX(90deg) scale(10)',
+        }}
+      >
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '20px',
+          fontWeight: 400,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#8899AA',
+          opacity: 0.08,
+          textShadow: '0 0 12px #8899AA',
+          whiteSpace: 'nowrap',
+        }}>
+          EXPANSION FRONTIER
+        </div>
+      </Html>
+
+      {/* GRID COORDINATE MARKERS - corner markers */}
+      <Html
+        position={[-400, 0, -400]}
+        occlude={false}
+        transform={true}
+        sprite={false}
+        center
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: 'rotateX(90deg) scale(8)',
+        }}
+      >
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '18px',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#4DD8E8',
+          opacity: 0.06,
+          whiteSpace: 'nowrap',
+        }}>
+          [ -400, -400 ]
+        </div>
+      </Html>
+
+      <Html
+        position={[400, 0, -400]}
+        occlude={false}
+        transform={true}
+        sprite={false}
+        center
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: 'rotateX(90deg) scale(8)',
+        }}
+      >
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '18px',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#4DD8E8',
+          opacity: 0.06,
+          whiteSpace: 'nowrap',
+        }}>
+          [ 400, -400 ]
+        </div>
+      </Html>
+
+      <Html
+        position={[-400, 0, 400]}
+        occlude={false}
+        transform={true}
+        sprite={false}
+        center
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: 'rotateX(90deg) scale(8)',
+        }}
+      >
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '18px',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#4DD8E8',
+          opacity: 0.06,
+          whiteSpace: 'nowrap',
+        }}>
+          [ -400, 400 ]
+        </div>
+      </Html>
+
+      <Html
+        position={[400, 0, 400]}
+        occlude={false}
+        transform={true}
+        sprite={false}
+        center
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: 'rotateX(90deg) scale(8)',
+        }}
+      >
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '18px',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#4DD8E8',
+          opacity: 0.06,
+          whiteSpace: 'nowrap',
+        }}>
+          [ 400, 400 ]
+        </div>
+      </Html>
+    </group>
+  );
+}
+
 function InfiniteGrid() {
   const timeRef = React.useRef(0);
   const { scene } = useThree();
@@ -429,249 +677,8 @@ function InfiniteGrid() {
         ))}
       </group>
 
-      {/* Sector Ground Labels - HUD text tags on floor grid */}
-      <group position={[0, 0.4, 0]} raycast={() => {}}>
-        {/* DSA SECTOR - near command center */}
-        <Html
-          position={[0, 0, 0]}
-          occlude={false}
-          transform={true}
-          sprite={false}
-          center
-          style={{
-            pointerEvents: 'none',
-            userSelect: 'none',
-            transform: 'rotateX(90deg) scale(12)',
-          }}
-        >
-          <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '28px',
-            fontWeight: 600,
-            letterSpacing: '0.3em',
-            textTransform: 'uppercase',
-            color: '#4DD8E8',
-            opacity: 0.15,
-            textShadow: '0 0 20px #4DD8E8',
-            whiteSpace: 'nowrap',
-          }}>
-            DSA SECTOR
-          </div>
-        </Html>
-
-        {/* SECTOR 01 - near tactical physical node */}
-        <Html
-          position={[-100, 0, -80]}
-          occlude={false}
-          transform={true}
-          sprite={false}
-          center
-          style={{
-            pointerEvents: 'none',
-            userSelect: 'none',
-            transform: 'rotateX(90deg) scale(10)',
-          }}
-        >
-          <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '24px',
-            fontWeight: 500,
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: '#2ECC71',
-            opacity: 0.12,
-            textShadow: '0 0 16px #2ECC71',
-            whiteSpace: 'nowrap',
-          }}>
-            SECTOR 01
-          </div>
-        </Html>
-
-        {/* OPTIMIZATION ZONE - near deploy war node */}
-        <Html
-          position={[80, 0, -60]}
-          occlude={false}
-          transform={true}
-          sprite={false}
-          center
-          style={{
-            pointerEvents: 'none',
-            userSelect: 'none',
-            transform: 'rotateX(90deg) scale(10)',
-          }}
-        >
-          <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '22px',
-            fontWeight: 500,
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            color: '#FFB347',
-            opacity: 0.12,
-            textShadow: '0 0 16px #FFB347',
-            whiteSpace: 'nowrap',
-          }}>
-            OPTIMIZATION ZONE
-          </div>
-        </Html>
-
-        {/* THREAT SECTOR - near reach codeforces node */}
-        <Html
-          position={[-140, 0, 100]}
-          occlude={false}
-          transform={true}
-          sprite={false}
-          center
-          style={{
-            pointerEvents: 'none',
-            userSelect: 'none',
-            transform: 'rotateX(90deg) scale(10)',
-          }}
-        >
-          <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '22px',
-            fontWeight: 500,
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            color: '#FF4D5E',
-            opacity: 0.1,
-            textShadow: '0 0 16px #FF4D5E',
-            whiteSpace: 'nowrap',
-          }}>
-            THREAT SECTOR
-          </div>
-        </Html>
-
-        {/* EXPANSION FRONTIER - far edge */}
-        <Html
-          position={[200, 0, 180]}
-          occlude={false}
-          transform={true}
-          sprite={false}
-          center
-          style={{
-            pointerEvents: 'none',
-            userSelect: 'none',
-            transform: 'rotateX(90deg) scale(10)',
-          }}
-        >
-          <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '20px',
-            fontWeight: 400,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#8899AA',
-            opacity: 0.08,
-            textShadow: '0 0 12px #8899AA',
-            whiteSpace: 'nowrap',
-          }}>
-            EXPANSION FRONTIER
-          </div>
-        </Html>
-
-        {/* GRID COORDINATE MARKERS - corner markers */}
-        <Html
-          position={[-400, 0, -400]}
-          occlude={false}
-          transform={true}
-          sprite={false}
-          center
-          style={{
-            pointerEvents: 'none',
-            userSelect: 'none',
-            transform: 'rotateX(90deg) scale(8)',
-          }}
-        >
-          <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '18px',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#4DD8E8',
-            opacity: 0.06,
-            whiteSpace: 'nowrap',
-          }}>
-            [ -400, -400 ]
-          </div>
-        </Html>
-
-        <Html
-          position={[400, 0, -400]}
-          occlude={false}
-          transform={true}
-          sprite={false}
-          center
-          style={{
-            pointerEvents: 'none',
-            userSelect: 'none',
-            transform: 'rotateX(90deg) scale(8)',
-          }}
-        >
-          <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '18px',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#4DD8E8',
-            opacity: 0.06,
-            whiteSpace: 'nowrap',
-          }}>
-            [ 400, -400 ]
-          </div>
-        </Html>
-
-        <Html
-          position={[-400, 0, 400]}
-          occlude={false}
-          transform={true}
-          sprite={false}
-          center
-          style={{
-            pointerEvents: 'none',
-            userSelect: 'none',
-            transform: 'rotateX(90deg) scale(8)',
-          }}
-        >
-          <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '18px',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#4DD8E8',
-            opacity: 0.06,
-            whiteSpace: 'nowrap',
-          }}>
-            [ -400, 400 ]
-          </div>
-        </Html>
-
-        <Html
-          position={[400, 0, 400]}
-          occlude={false}
-          transform={true}
-          sprite={false}
-          center
-          style={{
-            pointerEvents: 'none',
-            userSelect: 'none',
-            transform: 'rotateX(90deg) scale(8)',
-          }}
-        >
-          <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '18px',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#4DD8E8',
-            opacity: 0.06,
-            whiteSpace: 'nowrap',
-          }}>
-            [ 400, 400 ]
-          </div>
-        </Html>
-      </group>
+      {/* Sector Ground Labels - HUD text tags on floor grid (static - no useFrame) */}
+      <SectorLabels />
     </group>
   );
 }
@@ -998,6 +1005,65 @@ const TacticalNode = React.memo(function TacticalNode({
   const ringRef = React.useRef<THREE.Mesh | null>(null);
   const particlesRef = React.useRef<THREE.Points | null>(null);
   const { camera } = useThree();
+  const { nodes: storeNodes, setNodes } = useWarMapStore(useShallow((s) => ({
+    nodes: s.nodes,
+    setNodes: s.setNodes,
+  })));
+
+  // Track the initial position when drag starts
+  const initialPositionRef = React.useRef<[number, number, number] | null>(null);
+
+  const handleDragStart = React.useCallback(() => {
+    initialPositionRef.current = [...node.position] as [number, number, number];
+  }, [node.position]);
+
+  const handleDragEnd = React.useCallback(async () => {
+    // Get the new position from the group ref
+    const newPosition = groupRef.current?.position;
+    if (newPosition && initialPositionRef.current) {
+      const [x, y, z] = [newPosition.x, newPosition.y, newPosition.z] as [number, number, number];
+
+      // Check if position actually changed
+      const [initX, initY, initZ] = initialPositionRef.current;
+      if (Math.abs(x - initX) < 0.1 && Math.abs(y - initY) < 0.1 && Math.abs(z - initZ) < 0.1) {
+        return; // No significant change
+      }
+
+      // Determine if this is a goal or agent node
+      const isAgent = node.id.startsWith("agent-");
+      const entityId = isAgent ? node.id.replace("agent-", "") : node.id;
+      const type = isAgent ? "agent" : "goal";
+
+      try {
+        const response = await fetch("/api/warmap/positions", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: entityId, type, position: [x, y, z] }),
+        });
+
+        if (!response.ok) {
+          console.error("Failed to persist position:", await response.json());
+          // Revert position on failure
+          if (groupRef.current && initialPositionRef.current) {
+            groupRef.current.position.set(initX, initY, initZ);
+          }
+          return;
+        }
+
+        // Update local store with new position
+        setNodes(storeNodes.map((n) =>
+          n.id === node.id ? { ...n, position: [x, y, z] } : n
+        ));
+      } catch (error) {
+        console.error("Error persisting position:", error);
+        // Revert position on error
+        if (groupRef.current && initialPositionRef.current) {
+          groupRef.current.position.set(initX, initY, initZ);
+        }
+      }
+    }
+    initialPositionRef.current = null;
+  }, [node.id, setNodes, storeNodes]);
 
   const isInteractive = isSelected || isHovered;
   const intensityMultiplier = isInteractive ? 1.3 : 1.0;
@@ -1233,14 +1299,17 @@ const TacticalNode = React.memo(function TacticalNode({
   const handleClick = () => onSelect();
 
   return (
-    <group
-      ref={groupRef}
-      position={node.position}
-      onPointerOver={handlePointerOver}
-      onPointerOut={handlePointerOut}
-      onClick={handleClick}
-    >
-      {/* Outer particle cloud */}
+    <group ref={groupRef} position={node.position}>
+      <DragControls
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <group
+          onPointerOver={handlePointerOver}
+          onPointerOut={handlePointerOut}
+          onClick={handleClick}
+        >
+          {/* Outer particle cloud */}
       <points
         ref={particlesRef}
         geometry={particleGeometry}
@@ -1285,7 +1354,7 @@ const TacticalNode = React.memo(function TacticalNode({
         ))}
       </group>
 
-      {/* Multi-layered orbital rings - thinner, elegant tracks */}
+      {/* Multi-layered orbital rings - thinner, elegant tracks - horizontal (XZ plane) */}
       <group rotation={[Math.PI / 2, 0, 0]}>
         {orbitalRingGeometries.map((geometry, index) => (
           <mesh
@@ -1298,7 +1367,7 @@ const TacticalNode = React.memo(function TacticalNode({
         ))}
       </group>
 
-      {/* Satellite markers orbiting on each ring */}
+      {/* Satellite markers orbiting on each ring - horizontal (XZ plane) to match orbital rings */}
       <group rotation={[Math.PI / 2, 0, 0]}>
         {orbitalRingGeometries.map((geometry, ringIndex) => (
           <mesh
@@ -1307,8 +1376,8 @@ const TacticalNode = React.memo(function TacticalNode({
             material={satelliteMaterial}
             position={[
               geometry.parameters.radius * Math.cos(timeRef.current * (0.8 + ringIndex * 0.3) + ringIndex),
-              geometry.parameters.radius * Math.sin(timeRef.current * (0.8 + ringIndex * 0.3) + ringIndex),
-              0
+              0,
+              geometry.parameters.radius * Math.sin(timeRef.current * (0.8 + ringIndex * 0.3) + ringIndex)
             ] as [number, number, number]}
             raycast={() => {}}
           />
@@ -1431,6 +1500,8 @@ const TacticalNode = React.memo(function TacticalNode({
           raycast={() => {}}
         />
       )}
+        </group>
+      </DragControls>
     </group>
   );
 });

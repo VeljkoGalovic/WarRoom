@@ -187,11 +187,12 @@ export function WarMapDataController() {
     };
   }, [fetchWarMapData, fetchActivityLogs]);
 
+  // Select store values at component level (not inside useEffect)
+  const nodes = useWarMapStore((s) => s.nodes);
+  const selectedNodeId = useWarMapStore((s) => s.selectedNodeId);
+
   // Auto-select first node if none selected
   React.useEffect(() => {
-    const nodes = useWarMapStore((s) => s.nodes);
-    const selectedNodeId = useWarMapStore((s) => s.selectedNodeId);
-
     if (nodes.length > 0 && !selectedNodeId) {
       // Find first non-command node or fallback to first
       const firstNode = nodes.find(n => n.state !== "command") || nodes[0];
@@ -199,7 +200,7 @@ export function WarMapDataController() {
         setSelectedNode(firstNode.id);
       }
     }
-  }, [setSelectedNode]);
+  }, [nodes, selectedNodeId, setSelectedNode]);
 
   return null; // This component renders nothing, only manages data
 }
