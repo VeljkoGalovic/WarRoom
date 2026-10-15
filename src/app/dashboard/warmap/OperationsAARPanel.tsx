@@ -4,39 +4,21 @@ import * as React from "react";
 import { useWarMapStore } from "./WarMap3DCanvas";
 import styles from "./OperationsAARPanel.module.css";
 
+interface WarMapNode {
+  id: string;
+  name: string;
+  state: "neutral" | "active" | "conquered" | "at-risk" | "command";
+  progress: number;
+  connections: string[];
+  sectorId: string;
+}
+
 interface MilestoneData {
   id: string;
   title: string;
   completed: boolean;
   nodeId: string;
 }
-
-interface WarMapNode {
-  id: string;
-  name: string;
-  state: "neutral" | "active" | "conquered" | "at-risk" | "command";
-  progress: number;
-}
-
-const MILESTONES: MilestoneData[] = [
-  { id: "m1", title: "INITIAL RECON", completed: true, nodeId: "goal-1" },
-  { id: "m2", title: "ASSET DEPLOYMENT", completed: true, nodeId: "goal-1" },
-  { id: "m3", title: "PERIMETER ESTABLISHED", completed: true, nodeId: "goal-1" },
-  { id: "m4", title: "INTEL GATHERING", completed: false, nodeId: "goal-2" },
-  { id: "m5", title: "TARGET NEUTRALIZATION", completed: false, nodeId: "goal-2" },
-  { id: "m6", title: "SECTOR SECURED", completed: false, nodeId: "goal-2" },
-];
-
-const FAKE_NODES: WarMapNode[] = [
-  { id: "command", name: "COMMAND CENTER", state: "command", progress: 100 },
-  { id: "goal-1", name: "TACTICAL PHYSICAL", state: "conquered", progress: 100 },
-  { id: "goal-2", name: "DEPLOY WAR", state: "active", progress: 67 },
-  { id: "goal-3", name: "REACH CODEFORCES", state: "at-risk", progress: 23 },
-  { id: "goal-4", name: "MASTER SYSTEMS", state: "neutral", progress: 45 },
-  { id: "goal-5", name: "INTERNATIONAL MATH", state: "neutral", progress: 12 },
-  { id: "goal-6", name: "SECURE COMMS", state: "neutral", progress: 0 },
-  { id: "goal-7", name: "ESTABLISH FOOTHOLD", state: "neutral", progress: 0 },
-];
 
 const LOG_CATEGORIES = ["Physical Training", "Algorithmic", "SaaS Architecture", "System Engineering"] as const;
 
@@ -52,12 +34,39 @@ export function OperationsAARPanel() {
   // FIX: Select values individually to maintain stable references and prevent infinite render loops
   const selectedNodeId = useWarMapStore((s) => s.selectedNodeId);
   const addLogEntry = useWarMapStore((s) => s.addLogEntry);
+  const nodes = useWarMapStore((s) => s.nodes);
 
   const [logText, setLogText] = React.useState("");
   const [logCategory, setLogCategory] = React.useState<typeof LOG_CATEGORIES[0]>("Physical Training");
 
-  const selectedNode = FAKE_NODES.find(n => n.id === selectedNodeId);
-  const nodeMilestones = MILESTONES.filter(m => m.nodeId === selectedNodeId);
+  const selectedNode = nodes.find(n => n.id === selectedNodeId);
+  const nodeMilestones = React.useMemo(() => {
+    if (!selectedNode) return [];
+    // For now, derive milestones from node state
+    // In Phase 2, we'll add an API endpoint for milestones
+    const milestones: MilestoneData[] = [];
+
+    if (selectedNode.state === "conquered") {
+      milestones.push(
+        { id: "m1", title: "INITIAL RECON", completed: true, nodeId: selectedNode.id },
+        { id: "m2", title: "ASSET DEPLOYMENT", completed: true, nodeId: selectedNode.id },
+        { id: "m3", title: "PERIMETER ESTABLISHED", completed: true, nodeId: selectedNode.id },
+      );
+    } else if (selectedNode.state === "active") {
+      milestones.push(
+        { id: "m1", title: "INITIAL RECON", completed: true, nodeId: selectedNode.id },
+        { id: "m2", title: "ASSET DEPLOYMENT", completed: true, nodeId: selectedNode.id },
+        { id: "m3", title: "PERIMETER ESTABLISHED", completed: false, nodeId: selectedNode.id },
+      );
+    } else if (selectedNode.state === "at-risk") {
+      milestones.push(
+        { id: "m1", title: "INTEL GATHERING", completed: false, nodeId: selectedNode.id },
+        { id: "m2", title: "TARGET NEUTRALIZATION", completed: false, nodeId: selectedNode.id },
+        { id: "m3", title: "SECTOR SECURED", completed: false, nodeId: selectedNode.id },
+      );
+    }
+    return milestones;
+  }, [selectedNode]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

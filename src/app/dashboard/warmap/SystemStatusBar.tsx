@@ -19,6 +19,8 @@ const METRICS = [
   { id: "gpu", label: "GPU", color: "#FF4D5E", unit: "%" },
 ] as const;
 
+type MetricType = typeof METRICS[number];
+
 // Isolated uptime component - only re-renders for uptime
 function UptimeDisplay() {
   const [uptime, setUptime] = React.useState<string>("00:00:00");
@@ -47,7 +49,7 @@ function UptimeDisplay() {
 }
 
 // Isolated metric display - only re-renders when its specific metric changes
-function MetricDisplay({ metric, value }: { metric: typeof METRICS[0]; value: number }) {
+function MetricDisplay({ metric, value }: { metric: MetricType; value: number }) {
   return (
     <div className={styles.metricItem}>
       <div className={styles.metricLabelWrapper}>

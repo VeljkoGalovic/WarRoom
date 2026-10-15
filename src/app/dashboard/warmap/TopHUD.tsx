@@ -1,26 +1,21 @@
 "use client";
 
 import * as React from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useWarMapStore } from "./WarMap3DCanvas";
 import styles from "./TopHUD.module.css";
 
-const FAKE_NODES = [
-  { id: "command", name: "COMMAND CENTER", state: "command", progress: 100 },
-  { id: "goal-1", name: "TACTICAL PHYSICAL", state: "conquered", progress: 100 },
-  { id: "goal-2", name: "DEPLOY WAR", state: "active", progress: 67 },
-  { id: "goal-3", name: "REACH CODEFORCES", state: "at-risk", progress: 23 },
-  { id: "goal-4", name: "MASTER SYSTEMS", state: "neutral", progress: 45 },
-  { id: "goal-5", name: "INTERNATIONAL MATH", state: "neutral", progress: 12 },
-  { id: "goal-6", name: "SECURE COMMS", state: "neutral", progress: 0 },
-  { id: "goal-7", name: "ESTABLISH FOOTHOLD", state: "neutral", progress: 0 },
-];
-
-const conqueredCount = FAKE_NODES.filter(n => n.state === "conquered").length;
-const activeCount = FAKE_NODES.filter(n => n.state === "active").length;
-const threatCount = FAKE_NODES.filter(n => n.state === "at-risk").length;
-const globalProgress = Math.round((conqueredCount / (FAKE_NODES.length - 1)) * 100);
-
 export function TopHUD() {
+  const nodes = useWarMapStore(useShallow((s) => s.nodes));
+
+  // Compute stats from live nodes
+  const nonCommandNodes = nodes.filter(n => n.state !== "command");
+  const conqueredCount = nonCommandNodes.filter(n => n.state === "conquered").length;
+  const activeCount = nonCommandNodes.filter(n => n.state === "active").length;
+  const threatCount = nonCommandNodes.filter(n => n.state === "at-risk").length;
+  const globalProgress = nonCommandNodes.length > 0
+    ? Math.round((conqueredCount / nonCommandNodes.length) * 100)
+    : 0;
   const [time, setTime] = React.useState<string>("");
 
   React.useEffect(() => {

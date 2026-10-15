@@ -1,59 +1,59 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "postgresql"
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String        @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  role          String    @default("user")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  goals         Goal[]
-  agents        Agent[]
+  role          String        @default("user")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   activityLogs  ActivityLog[]
+  agents        Agent[]
+  goals         Goal[]
   memories      Memory[]
 }
 
 model Goal {
-  id          String       @id @default(cuid())
+  id          String      @id @default(cuid())
   title       String
-  description String?      @db.Text
-  strategy    String?      @db.Text
-  status      GoalStatus   @default(ACTIVE)
-  threatLevel ThreatLevel  @default(LOW)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  description String?
+  strategy    String?
+  status      GoalStatus  @default(ACTIVE)
+  threatLevel ThreatLevel @default(LOW)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  milestones  Milestone[]
   agentId     String?
-  agent       Agent?       @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  mapX        Float?
+  mapY        Float?
+  mapZ        Float?
+  agent       Agent?      @relation(fields: [agentId], references: [id])
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestones  Milestone[]
 
   @@index([userId])
   @@index([status])
 }
 
 model Milestone {
-  id          String       @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
-  isCompleted Boolean      @default(false)
-  date        DateTime     @db.Date
-  notes       String?      @db.Text
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  isCompleted Boolean  @default(false)
+  date        DateTime @db.Date
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   goalId      String
-  goal        Goal         @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goal        Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
 
   @@index([goalId])
   @@index([date])
@@ -61,23 +61,26 @@ model Milestone {
 }
 
 model Agent {
-  id            String   @id @default(cuid())
-  name          String
-  rank          String   // GENERAL, CAPTAIN, SPECIALIST, LIEUTENANT, SERGEANT
-  role          String   @db.Text
-  identity         String?  @db.Text
-  operationalPrompt String?  @db.Text
-  systemPrompt     String   @db.Text
-  modelEndpoint    String
-  avatarIcon       String?
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  goals            Goal[]
-  memories         Memory[]
-  activityLogs     ActivityLog[]
+  id                String        @id @default(cuid())
+  name              String
+  rank              String
+  role              String
+  identity          String?
+  operationalPrompt String?
+  systemPrompt      String
+  modelEndpoint     String
+  avatarIcon        String?
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  userId            String
+  mapX              Float?
+  mapY              Float?
+  mapZ              Float?
+  activityLogs      ActivityLog[]
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goals             Goal[]
+  memories          Memory[]
 
   @@index([userId])
 }
@@ -86,12 +89,12 @@ model ActivityLog {
   id        String   @id @default(cuid())
   timestamp DateTime @default(now())
   category  String
-  message   String   @db.Text
+  message   String
   metadata  Json?
   userId    String
   agentId   String?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   agent     Agent?   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([agentId])
@@ -100,15 +103,15 @@ model ActivityLog {
 }
 
 model Memory {
-  id        String   @id @default(cuid())
-  content   String   @db.Text
-  embedding Unsupported("vector(3072)")
+  id        String                @id @default(cuid())
+  content   String
+  embedding Unsupported("vector")
   agentId   String
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  agent     Agent                 @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([agentId])
   @@index([userId])

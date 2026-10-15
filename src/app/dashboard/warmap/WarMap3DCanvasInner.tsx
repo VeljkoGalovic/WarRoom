@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Html, Grid, primitive } from "@react-three/drei";
+import { Html, Grid } from "@react-three/drei";
 import * as THREE from "three";
 import { useShallow } from "zustand/react/shallow";
 import { useWarMapStore } from "./WarMap3DCanvas";
@@ -418,10 +418,14 @@ function InfiniteGrid() {
       {/* Topological Contour Lines - Pre-created meshes animated via useFrame */}
       <group position={[0, 0.25, 0]} raycast={() => {}}>
         {contourMeshes.map((mesh, i) => (
-          <primitive key={`contour-${i}`} object={mesh} raycast={() => {}} />
+          <group key={`contour-${i}`} raycast={() => {}}>
+            <mesh geometry={mesh.geometry} material={mesh.material} raycast={() => {}} />
+          </group>
         ))}
         {fineContourMeshes.map((mesh, i) => (
-          <primitive key={`contour-fine-${i}`} object={mesh} raycast={() => {}} />
+          <group key={`contour-fine-${i}`} raycast={() => {}}>
+            <mesh geometry={mesh.geometry} material={mesh.material} raycast={() => {}} />
+          </group>
         ))}
       </group>
 
@@ -430,7 +434,6 @@ function InfiniteGrid() {
         {/* DSA SECTOR - near command center */}
         <Html
           position={[0, 0, 0]}
-          scaleFactor={12}
           occlude={false}
           transform={true}
           sprite={false}
@@ -438,6 +441,7 @@ function InfiniteGrid() {
           style={{
             pointerEvents: 'none',
             userSelect: 'none',
+            transform: 'rotateX(90deg) scale(12)',
           }}
         >
           <div style={{
@@ -450,7 +454,6 @@ function InfiniteGrid() {
             opacity: 0.15,
             textShadow: '0 0 20px #4DD8E8',
             whiteSpace: 'nowrap',
-            transform: 'rotateX(90deg)',
           }}>
             DSA SECTOR
           </div>
@@ -459,7 +462,6 @@ function InfiniteGrid() {
         {/* SECTOR 01 - near tactical physical node */}
         <Html
           position={[-100, 0, -80]}
-          scaleFactor={10}
           occlude={false}
           transform={true}
           sprite={false}
@@ -467,6 +469,7 @@ function InfiniteGrid() {
           style={{
             pointerEvents: 'none',
             userSelect: 'none',
+            transform: 'rotateX(90deg) scale(10)',
           }}
         >
           <div style={{
@@ -479,7 +482,6 @@ function InfiniteGrid() {
             opacity: 0.12,
             textShadow: '0 0 16px #2ECC71',
             whiteSpace: 'nowrap',
-            transform: 'rotateX(90deg)',
           }}>
             SECTOR 01
           </div>
@@ -488,7 +490,6 @@ function InfiniteGrid() {
         {/* OPTIMIZATION ZONE - near deploy war node */}
         <Html
           position={[80, 0, -60]}
-          scaleFactor={10}
           occlude={false}
           transform={true}
           sprite={false}
@@ -496,6 +497,7 @@ function InfiniteGrid() {
           style={{
             pointerEvents: 'none',
             userSelect: 'none',
+            transform: 'rotateX(90deg) scale(10)',
           }}
         >
           <div style={{
@@ -508,7 +510,6 @@ function InfiniteGrid() {
             opacity: 0.12,
             textShadow: '0 0 16px #FFB347',
             whiteSpace: 'nowrap',
-            transform: 'rotateX(90deg)',
           }}>
             OPTIMIZATION ZONE
           </div>
@@ -517,7 +518,6 @@ function InfiniteGrid() {
         {/* THREAT SECTOR - near reach codeforces node */}
         <Html
           position={[-140, 0, 100]}
-          scaleFactor={10}
           occlude={false}
           transform={true}
           sprite={false}
@@ -525,6 +525,7 @@ function InfiniteGrid() {
           style={{
             pointerEvents: 'none',
             userSelect: 'none',
+            transform: 'rotateX(90deg) scale(10)',
           }}
         >
           <div style={{
@@ -537,7 +538,6 @@ function InfiniteGrid() {
             opacity: 0.1,
             textShadow: '0 0 16px #FF4D5E',
             whiteSpace: 'nowrap',
-            transform: 'rotateX(90deg)',
           }}>
             THREAT SECTOR
           </div>
@@ -546,7 +546,6 @@ function InfiniteGrid() {
         {/* EXPANSION FRONTIER - far edge */}
         <Html
           position={[200, 0, 180]}
-          scaleFactor={10}
           occlude={false}
           transform={true}
           sprite={false}
@@ -554,6 +553,7 @@ function InfiniteGrid() {
           style={{
             pointerEvents: 'none',
             userSelect: 'none',
+            transform: 'rotateX(90deg) scale(10)',
           }}
         >
           <div style={{
@@ -566,7 +566,6 @@ function InfiniteGrid() {
             opacity: 0.08,
             textShadow: '0 0 12px #8899AA',
             whiteSpace: 'nowrap',
-            transform: 'rotateX(90deg)',
           }}>
             EXPANSION FRONTIER
           </div>
@@ -575,7 +574,6 @@ function InfiniteGrid() {
         {/* GRID COORDINATE MARKERS - corner markers */}
         <Html
           position={[-400, 0, -400]}
-          scaleFactor={8}
           occlude={false}
           transform={true}
           sprite={false}
@@ -583,6 +581,7 @@ function InfiniteGrid() {
           style={{
             pointerEvents: 'none',
             userSelect: 'none',
+            transform: 'rotateX(90deg) scale(8)',
           }}
         >
           <div style={{
@@ -593,7 +592,6 @@ function InfiniteGrid() {
             color: '#4DD8E8',
             opacity: 0.06,
             whiteSpace: 'nowrap',
-            transform: 'rotateX(90deg)',
           }}>
             [ -400, -400 ]
           </div>
@@ -601,7 +599,6 @@ function InfiniteGrid() {
 
         <Html
           position={[400, 0, -400]}
-          scaleFactor={8}
           occlude={false}
           transform={true}
           sprite={false}
@@ -609,6 +606,7 @@ function InfiniteGrid() {
           style={{
             pointerEvents: 'none',
             userSelect: 'none',
+            transform: 'rotateX(90deg) scale(8)',
           }}
         >
           <div style={{
@@ -619,7 +617,6 @@ function InfiniteGrid() {
             color: '#4DD8E8',
             opacity: 0.06,
             whiteSpace: 'nowrap',
-            transform: 'rotateX(90deg)',
           }}>
             [ 400, -400 ]
           </div>
@@ -627,7 +624,6 @@ function InfiniteGrid() {
 
         <Html
           position={[-400, 0, 400]}
-          scaleFactor={8}
           occlude={false}
           transform={true}
           sprite={false}
@@ -635,6 +631,7 @@ function InfiniteGrid() {
           style={{
             pointerEvents: 'none',
             userSelect: 'none',
+            transform: 'rotateX(90deg) scale(8)',
           }}
         >
           <div style={{
@@ -645,7 +642,6 @@ function InfiniteGrid() {
             color: '#4DD8E8',
             opacity: 0.06,
             whiteSpace: 'nowrap',
-            transform: 'rotateX(90deg)',
           }}>
             [ -400, 400 ]
           </div>
@@ -653,7 +649,6 @@ function InfiniteGrid() {
 
         <Html
           position={[400, 0, 400]}
-          scaleFactor={8}
           occlude={false}
           transform={true}
           sprite={false}
@@ -661,6 +656,7 @@ function InfiniteGrid() {
           style={{
             pointerEvents: 'none',
             userSelect: 'none',
+            transform: 'rotateX(90deg) scale(8)',
           }}
         >
           <div style={{
@@ -671,7 +667,6 @@ function InfiniteGrid() {
             color: '#4DD8E8',
             opacity: 0.06,
             whiteSpace: 'nowrap',
-            transform: 'rotateX(90deg)',
           }}>
             [ 400, 400 ]
           </div>
@@ -755,7 +750,8 @@ function AmbientParticles() {
     // Update main ambient particles
     const posAttr = particlesRef.current?.geometry?.attributes?.position;
     const velocities = particleVelocitiesRef.current;
-    if (posAttr?.array && velocities) {
+    const particles = particlesRef.current;
+    if (posAttr?.array && velocities && particles) {
       const pos = posAttr.array as Float32Array;
       const vel = velocities;
       const count = pos.length / 3;
@@ -774,8 +770,8 @@ function AmbientParticles() {
           pos[i * 3 + 2] = (Math.random() - 0.5) * 600;
         }
       }
-      particlesRef.current.geometry.attributes.position.needsUpdate = true;
-      particlesRef.current.rotation.y += delta * 0.002;
+      particles.geometry.attributes.position.needsUpdate = true;
+      particles.rotation.y += delta * 0.002;
     }
   });
 
@@ -941,8 +937,11 @@ function Hyperlane({ from, to, color, isActive }: {
         sizeAttr[i] = (0.8 + pulse * 1.2) * (1 - Math.abs(p - 0.5) * 0.5); // Brighter in middle
       }
 
-      flowParticlesRef.current.geometry.attributes.position.needsUpdate = true;
-      flowParticlesRef.current.geometry.attributes.size.needsUpdate = true;
+      const flowParticles = flowParticlesRef.current;
+      if (flowParticles) {
+        flowParticles.geometry.attributes.position.needsUpdate = true;
+        flowParticles.geometry.attributes.size.needsUpdate = true;
+      }
     }
   });
 
@@ -1191,8 +1190,8 @@ const TacticalNode = React.memo(function TacticalNode({
 
     // Core glow pulse
     if (groupRef.current) {
-      const core = groupRef.current.getObjectByName("core-glow");
-      if (core) {
+      const core = groupRef.current.getObjectByName("core-glow") as THREE.Mesh | null;
+      if (core && core.material) {
         const pulse = 1 + Math.sin(timeRef.current * 2.5) * 0.18;
         core.scale.setScalar(pulse);
         (core.material as THREE.MeshBasicMaterial).opacity = 0.2 * intensityMultiplier * (0.6 + Math.sin(timeRef.current * 3) * 0.4);
@@ -1201,7 +1200,8 @@ const TacticalNode = React.memo(function TacticalNode({
 
     // Animate particles
     const nodePosAttr = particlesRef.current?.geometry?.attributes?.position;
-    if (nodePosAttr?.array) {
+    const particles = particlesRef.current;
+    if (nodePosAttr?.array && particles) {
       const positions = nodePosAttr.array as Float32Array;
       const { baseRadii, speeds, phases, count } = particlePositions;
 
@@ -1215,13 +1215,21 @@ const TacticalNode = React.memo(function TacticalNode({
         positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
         positions[i * 3 + 2] = radius * Math.cos(phi);
       }
-      particlesRef.current.geometry.attributes.position.needsUpdate = true;
-      particlesRef.current.rotation.y += delta * 0.02;
+      particles.geometry.attributes.position.needsUpdate = true;
+      particles.rotation.y += delta * 0.02;
     }
   });
 
-  const handlePointerOver = () => onHover(true);
-  const handlePointerOut = () => onHover(false);
+  const canvas = useThree((state) => state.gl.domElement);
+
+  const handlePointerOver = () => {
+    onHover(true);
+    if (canvas) canvas.style.cursor = "pointer";
+  };
+  const handlePointerOut = () => {
+    onHover(false);
+    if (canvas) canvas.style.cursor = "default";
+  };
   const handleClick = () => onSelect();
 
   return (
@@ -1231,7 +1239,6 @@ const TacticalNode = React.memo(function TacticalNode({
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
       onClick={handleClick}
-      style={{ cursor: isInteractive ? "pointer" : "default" }}
     >
       {/* Outer particle cloud */}
       <points
@@ -1343,9 +1350,11 @@ const TacticalNode = React.memo(function TacticalNode({
       <Html
         position={[0, -42, 0] as [number, number, number]}
         occlude={false}
-        scaleFactor={0.5}
         transform={true}
         sprite={false}
+        style={{
+          transform: 'scale(0.5)',
+        }}
       >
         <div style={{
           textAlign: "center",

@@ -29,7 +29,7 @@ export const COLORS = {
 };
 
 // ============================================================================
-// TYPES & FAKE DATA
+// TYPES
 // ============================================================================
 
 export type NodeState = "neutral" | "active" | "conquered" | "at-risk" | "command";
@@ -58,20 +58,6 @@ export interface LogEntry {
   category: string;
 }
 
-export const FAKE_NODES: WarMapNode[] = [
-  {
-    id: "command",
-    name: "COMMAND CENTER",
-    state: "command",
-    position: [0, 0, 0],
-    progress: 100,
-    connections: [],
-    sectorId: "alpha",
-  },
-];
-
-export const FAKE_MILESTONES: MilestoneData[] = [];
-
 const INITIAL_LOG_ENTRIES: LogEntry[] = [
   { time: "06:42:13", event: "SYSTEM ONLINE", detail: "Tactical display initialized", category: "system" },
   { time: "06:42:15", event: "NODE SYNC", detail: "Tactical Physical sector reporting nominal", category: "success" },
@@ -89,10 +75,12 @@ interface WarMapState {
   cameraTarget: THREE.Vector3;
   isAnimating: boolean;
   logEntries: LogEntry[];
+  nodes: WarMapNode[];
   setSelectedNode: (id: string | null) => void;
   setHoveredNode: (id: string | null) => void;
   setCameraTarget: (target: THREE.Vector3, animate?: boolean) => void;
   addLogEntry: (entry: LogEntry) => void;
+  setNodes: (nodes: WarMapNode[]) => void;
 }
 
 export const useWarMapStore = create<WarMapState>((set) => ({
@@ -101,12 +89,14 @@ export const useWarMapStore = create<WarMapState>((set) => ({
   cameraTarget: new THREE.Vector3(0, 0, 0),
   isAnimating: false,
   logEntries: INITIAL_LOG_ENTRIES,
+  nodes: [],
   setSelectedNode: (id) => set({ selectedNodeId: id }),
   setHoveredNode: (id) => set({ hoveredNodeId: id }),
   setCameraTarget: (target, animate = true) => set({ cameraTarget: target, isAnimating: animate }),
   addLogEntry: (entry) => set((state) => ({
     logEntries: [entry, ...state.logEntries].slice(0, 50)
   })),
+  setNodes: (nodes) => set({ nodes }),
 }));
 
 // ============================================================================
@@ -177,7 +167,7 @@ function SceneLighting() {
 
 export function WarMap3DCanvas() {
   // Tactical node cluster centroid (calculated from TACTICAL_NODES positions)
-  const TARGET_CENTER = [-10, 0, -10];
+  const TARGET_CENTER: [number, number, number] = [-10, 0, -10];
 
   return (
     <Canvas
